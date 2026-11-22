@@ -5,11 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第1章 后训练概述与数据定位</title>
     <link rel="stylesheet" href="theme.css">
-</head>
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure {
+            margin: 1.2rem 0; background: #fdfcff;
+            border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem;
+        }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden {
+            position: absolute; width: 1px; height: 1px;
+            overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+        }
+        .skip-link {
+            position: absolute; left: -9999px; top: 0; z-index: 100;
+            background: #6d28d9; color: #fff; padding: 0.6rem 1rem;
+            border-radius: 0 0 12px 0; text-decoration: none;
+        }
+        .skip-link:focus { left: 0; }
+        .stepper { margin: 1.2rem 0; border: 1px solid #e2d9f7; border-radius: 18px; padding: 1rem; background: #fdfcff; }
+        .stepper-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
+        .stepper-tabs button {
+            font: inherit; font-size: 0.9rem; cursor: pointer;
+            padding: 0.3rem 1rem; border-radius: 30px; border: 1px solid #c4b5fd;
+            background: #f5f3ff; color: #5b21b6;
+        }
+        .stepper-tabs button[aria-selected="true"] { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+        .stepper-tabs button:focus-visible, a:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        .stepper-panel p { margin: 0.3rem 0; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html" class="active">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +72,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第1章 后训练概述与数据定位</h2>
+        <h1>第1章 后训练概述与数据定位</h1>
 
         <p>大家好，欢迎来到《后训练数据集分析与构建流程》系列课程。在正式开始之前，我想先请你思考一个问题：你有没有注意到，同一个基座模型——比如 LLaMA 3 70B——在不同的对话产品中表现天差地别？有的版本像是温文尔雅的学者，回答问题逻辑清晰、面面俱到；有的版本却像是一个不耐烦的客服，回答简短、态度冰冷，甚至还经常拒绝回答。</p>
 
@@ -64,6 +95,21 @@
     ↓ 标注/合成数据 → 对齐模型（Aligned Model）
 推理部署（Inference & Deployment）
     ↓ API / 本地 → 最终用户</code></pre>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig1-title fig1-desc" viewBox="0 0 780 200" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig1-title">大模型生命周期中后训练的位置</title>
+                <desc id="fig1-desc">预训练用海量文本得到基座模型，后训练用标注与合成数据得到对齐模型，推理部署把模型交付给用户。</desc>
+                <rect width="780" height="200" rx="16" fill="#faf8ff"/>
+                <path d="M250 100 H320 M500 100 H570" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round"/>
+                <g font-size="16" font-weight="600" text-anchor="middle" fill="#3b1d78">
+                    <rect x="40" y="65" width="210" height="70" rx="14" fill="#e8e2ff"/><text x="145" y="95">预训练</text><text x="145" y="118" font-size="13" font-weight="400" fill="#5b21b6">海量文本 → 基座模型</text>
+                    <rect x="320" y="65" width="180" height="70" rx="14" fill="#ffe9d6"/><text x="410" y="95">后训练</text><text x="410" y="118" font-size="13" font-weight="400" fill="#9a4b16">标注/合成 → 对齐模型</text>
+                    <rect x="570" y="65" width="180" height="70" rx="14" fill="#d6f1eb"/><text x="660" y="95">推理部署</text><text x="660" y="118" font-size="13" font-weight="400" fill="#0f6f66">API/本地 → 用户</text>
+                </g>
+            </svg>
+            <figcaption>后训练夹在预训练与部署之间：预训练让模型“懂语言”，后训练让它“好用”，部署再把它交付给用户。图中三色框与正文三阶段一一对应。</figcaption>
+        </figure>
 
         <p>预训练阶段，模型通过数万亿 token 的原始文本学习语法、事实知识和基础推理能力。这一阶段产出的基座模型（Base Model）就像是一个博学但不懂社交的天才——知道很多，但不知道怎么好好说话。</p>
 
@@ -119,6 +165,26 @@
                 <td>思维链轨迹<br>奖励信号/过程奖励</td>
             </tr>
         </table>
+
+        <div class="stepper">
+            <div class="stepper-tabs" role="tablist" aria-label="后训练三阶段切换">
+                <button type="button" role="tab" id="tab-sft" aria-controls="panel-sft" aria-selected="true">① SFT 监督微调</button>
+                <button type="button" role="tab" id="tab-pref" aria-controls="panel-pref" aria-selected="false">② 偏好对齐</button>
+                <button type="button" role="tab" id="tab-reason" aria-controls="panel-reason" aria-selected="false">③ 推理增强</button>
+            </div>
+            <div class="stepper-panel" id="panel-sft" role="tabpanel" aria-labelledby="tab-sft">
+                <p><strong>目标：</strong>让模型学会遵循指令、完成任务。</p>
+                <p><strong>数据形态：</strong>指令-回答对（单轮/多轮对话），如 Alpaca 使用约 52K 指令数据微调 LLaMA。</p>
+            </div>
+            <div class="stepper-panel" id="panel-pref" role="tabpanel" aria-labelledby="tab-pref" hidden>
+                <p><strong>目标：</strong>让输出与人类偏好一致，学会“什么该说、什么不该说”。</p>
+                <p><strong>数据形态：</strong>偏好对比对（chosen / rejected pair），方法含 RLHF、DPO、ORPO 等。</p>
+            </div>
+            <div class="stepper-panel" id="panel-reason" role="tabpanel" aria-labelledby="tab-reason" hidden>
+                <p><strong>目标：</strong>提升数学、代码、科学等复杂任务上的深度推理能力。</p>
+                <p><strong>数据形态：</strong>思维链轨迹与可验证奖励信号，代表方法为 GRPO / RLVR（见第 20 章）。</p>
+            </div>
+        </div>
 
         <p>这张表格背后隐含了一条清晰的进化脉络。早期（2023）的模型基本只做 SFT，比如 Alpaca 用 52K 指令数据微调 LLaMA 就获得了令人惊艳的效果。2024 年，偏好对齐成为标配——RLHF、DPO 等方法让模型学会了"什么该说、什么不该说"。到 2025-2026 年，以 DeepSeek-R1 为代表的 GRPO 方法，将后训练的焦点从"对齐"进一步延伸到"深度推理"，让模型在数学、代码、科学推理等领域取得突破。</p>
 
@@ -288,13 +354,46 @@
 
         <p>下一个话题，我们将走进后训练数据的"分类学"——<strong>各种不同类型的后训练数据之间是什么关系？如何根据应用场景选择合适的数据类型？让我们一起进入第 2 章：后训练数据分类体系。</strong></p>
 
+        <h2>1.6 本章引用与出处</h2>
+        <ul>
+            <li>LIMA: Less Is More for Alignment（5000 条数据对齐 65B LLaMA）— <a href="https://arxiv.org/abs/2305.11206">arXiv:2305.11206</a></li>
+            <li>DeepSeek-R1（GRPO 推理增强范式）— <a href="https://arxiv.org/abs/2501.12948">arXiv:2501.12948</a></li>
+            <li>DeepSeekMath（GRPO 原始提出）— <a href="https://arxiv.org/abs/2402.03300">arXiv:2402.03300</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>Alpaca 的 52K 指令数据、LIMA 的 5,000 条对齐数据均为原始论文/技术报告报告的数字。本章提到的“PiKa 2025”小数据对比与 2024 年底代码助手团队的踩坑故事属于课程内部引述，未附原始论文链接，读者应以原始发布为准，不应直接引用为实验证据。
+        </div>
+
         <div class="footer-nav">
             <a href="javascript:void(0)">← 上一章</a>
             <a href="index.html">📖 返回目录</a>
             <a href="02.html">下一章 →</a>
         </div>
-    </div>
+    </main>
 </div>
 </div>
+<script>
+    (function () {
+        var tabs = Array.prototype.slice.call(document.querySelectorAll('.stepper [role="tab"]'));
+        function select(tab) {
+            tabs.forEach(function (t) {
+                var on = t === tab;
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+                var panel = document.getElementById(t.getAttribute('aria-controls'));
+                if (panel) { panel.hidden = !on; }
+            });
+        }
+        tabs.forEach(function (tab, i) {
+            tab.addEventListener('click', function () { select(tab); });
+            tab.addEventListener('keydown', function (e) {
+                var dir = e.key === 'ArrowRight' ? 1 : (e.key === 'ArrowLeft' ? -1 : 0);
+                if (!dir) { return; }
+                e.preventDefault();
+                var next = tabs[(i + dir + tabs.length) % tabs.length];
+                next.focus(); select(next);
+            });
+        });
+    })();
+</script>
 </body>
 </html>
