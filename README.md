@@ -18,7 +18,7 @@ open index.html   # macOS，纯静态即开即看
 
 ```text
 post-training-dataset-tutorial/
-├── index.html / 01.html ~ 28.html / courses.json / theme.css
+├── index.html / 01.html ~ 28.html / theme.css
 ```
 
 ## 📖 章节分段
