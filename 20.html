@@ -5,11 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第20章 GRPO/RLVR推理增强数据</title>
     <link rel="stylesheet" href="theme.css">
-</head>
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        .math-equation { margin: 1rem 0; background: #faf8ff; border: 1px solid #e2d9f7; border-radius: 14px; padding: 0.8rem 1rem; }
+        .math-scroll { overflow-x: auto; }
+        .math-scroll math { font-size: 1.1rem; }
+        a:focus-visible, button:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +55,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第20章 GRPO/RLVR推理增强数据</h2>
+        <h1>第20章 GRPO/RLVR推理增强数据</h1>
 
         <p>大家好，欢迎回到课程。在上一章，我们学习了思维链（CoT）数据——通过让模型在 SFT 阶段学会输出逐步推理过程来提升推理能力。但只靠 SFT 还不够：模型虽然学会了"如何写出推理步骤"，但并没有学会"如何判断推理步骤的对错"，更没有学会"如何通过自我纠错来改进推理"。</p>
 
@@ -100,6 +114,45 @@
    ← 回答比组内平均差的样本被负向抑制
 
 6. 加入 KL 散度约束，防止策略更新过猛</code></pre>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig20-title fig20-desc" viewBox="0 0 820 260" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig20-title">GRPO 对一个问题的组采样与优势归一化</title>
+                <desc id="fig20-desc">同一个问题采样 G 个回答，验证器分别打分，再减去组内均值并除以标准差得到优势值，高于均值的回答被正向激励。</desc>
+                <rect width="820" height="260" rx="16" fill="#faf8ff"/>
+                <g font-size="14" text-anchor="middle" fill="#3b1d78">
+                    <rect x="25" y="100" width="130" height="60" rx="12" fill="#e8e2ff"/><text x="90" y="126">问题 q</text><text x="90" y="146" font-size="12" fill="#5b21b6">采样 G 个回答</text>
+                    <rect x="230" y="20" width="150" height="36" rx="10" fill="#ffe9d6"/><text x="305" y="44" font-size="13">o₁ → r₁ = 1</text>
+                    <rect x="230" y="70" width="150" height="36" rx="10" fill="#ffe9d6"/><text x="305" y="94" font-size="13">o₂ → r₂ = 0</text>
+                    <rect x="230" y="120" width="150" height="36" rx="10" fill="#ffe9d6"/><text x="305" y="144" font-size="13">… → …</text>
+                    <rect x="230" y="170" width="150" height="36" rx="10" fill="#ffe9d6"/><text x="305" y="194" font-size="13">o_G → r_G = 1</text>
+                    <rect x="455" y="100" width="160" height="60" rx="12" fill="#d6f1eb"/><text x="535" y="125" font-size="13">μ, σ 组内统计</text><text x="535" y="146" font-size="12" fill="#0f6f66">A_i=(r_i−μ)/σ</text>
+                    <rect x="665" y="100" width="130" height="60" rx="12" fill="#e8e2ff"/><text x="730" y="125">策略更新</text><text x="730" y="146" font-size="12" fill="#5b21b6">高于 μ 者 +</text>
+                </g>
+                <path d="M155 130 H195 M195 130 V38 H230 M195 130 V88 H230 M195 130 V138 H230 M195 130 V188 H230" stroke="#8b5cf6" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path d="M380 130 H455 M615 130 H665" stroke="#8b5cf6" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </svg>
+            <figcaption>GRPO 对一个问题的处理：采样 G 个回答（DeepSeek-R1 论文中 G 取 8–64），用可验证奖励函数逐个打分，再减去组内均值 μ 并除以标准差 σ 得到优势 A_i；得分高于均值的回答被正向激励、低于均值的被抑制，全程不需要 Critic 或 Reward Model。</figcaption>
+        </figure>
+
+        <div class="math-equation" role="group" aria-label="组内归一化优势公式">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="组内归一化优势公式，可横向滚动">
+                <math display="block" aria-label="A_i 等于 r_i 减组内均值 mu，除以组内标准差 sigma；其中 mu 等于 1/G 乘以 r_i 的和">
+                    <mrow>
+                        <msub><mi>A</mi><mi>i</mi></msub><mo>=</mo>
+                        <mfrac>
+                            <mrow><msub><mi>r</mi><mi>i</mi></msub><mo>−</mo><mi>μ</mi></mrow>
+                            <mi>σ</mi>
+                        </mfrac>
+                        <mo>,</mo><mspace width="1em"/>
+                        <mi>μ</mi><mo>=</mo>
+                        <mfrac><mn>1</mn><mi>G</mi></mfrac>
+                        <munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>G</mi></munderover>
+                        <msub><mi>r</mi><mi>i</mi></msub>
+                    </mrow>
+                </math>
+            </div>
+        </div>
 
         <p>这个流程的精妙之处在于：它完全不依赖人类标注，也不依赖额外训练的 Reward Model——只用组内相对表现作为训练信号。归一化之后的优势值让模型学会了"在同一个问题的不同回答中，哪些是相对更好的"。DeepSeek-R1 正是通过这种方法，在数学推理、代码生成等领域达到了与 OpenAI o1 相当的水平。</p>
 
@@ -274,12 +327,22 @@
 
         <p>不过，推理能力只是模型能力的一个维度。下一个话题，我们要讨论的是另一个非常重要的能力维度——<strong>工具调用（Tool Use）和函数调用（Function Calling）。让模型学会使用外部工具，是从"对话助手"进化到"行动智能体"的关键一步。让我们一起进入第 21 章：工具调用与 Function Call 数据。</strong></p>
 
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>DeepSeek-R1（GRPO 应用于推理模型，G 取 8–64）— <a href="https://arxiv.org/abs/2501.12948">arXiv:2501.12948</a></li>
+            <li>DeepSeekMath（GRPO 原始提出）— <a href="https://arxiv.org/abs/2402.03300">arXiv:2402.03300</a></li>
+            <li>DAPO: An Open-Source LLM Reinforcement Learning System at Scale（动态采样、Clip-Higher、Token-Level Loss）— <a href="https://arxiv.org/abs/2503.14476">arXiv:2503.14476</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于本节数字的口径：</strong>“高质量 SFT 冷启动可让 GRPO 采样数量减少 40% 以上”为课程内的简化描述，未附具体消融表；DAPO 的“无区分度样本随训练增多”与各组件的效果，读者应以 DAPO 原文的消融实验为准。
+        </div>
+
         <div class="footer-nav">
             <a href="19.html">← 上一章</a>
             <a href="index.html">📖 返回目录</a>
             <a href="21.html">下一章 →</a>
         </div>
-    </div>
+    </main>
 </div>
 </div>
 </body>
