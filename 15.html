@@ -5,11 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第15章 偏好对齐数据基础</title>
     <link rel="stylesheet" href="theme.css">
-</head>
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        .math-equation { margin: 1rem 0; background: #faf8ff; border: 1px solid #e2d9f7; border-radius: 14px; padding: 0.8rem 1rem; }
+        .math-scroll { overflow-x: auto; }
+        .math-scroll math { font-size: 1.1rem; }
+        a:focus-visible, button:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +55,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第15章 偏好对齐数据基础</h2>
+        <h1>第15章 偏好对齐数据基础</h1>
 
         <p>大家好，我是你们的讲师。从这一章开始，我们正式进入课程最有意思的部分——<strong>偏好对齐数据</strong>。如果你之前接触过 SFT 数据，可能会觉得：模型不是已经在指令数据上微调过了吗？为什么还需要"偏好对齐"？</p>
 
@@ -66,14 +80,51 @@
 
         <p>要理解偏好数据，先要理解偏好背后的人类决策模型。在统计学和经济学中，有一类成熟的模型用于描述人如何做"二选一"的判断。其中最经典的，就是 <strong>Bradley-Terry 模型</strong>。</p>
 
-        <p>Bradley-Terry 模型的核心假设是：每一个选项都有一个潜在的"强度值"或"质量分"。当人在两个选项之间做选择时，选择 A 而非 B 的概率，取决于 A 和 B 各自强度值的比值：</p>
+        <p>Bradley-Terry 模型的核心假设是：每一个选项都有一个潜在的“强度值”。当人在两个选项之间做选择时，选择 A 而非 B 的概率，取决于 A 和 B 各自强度值的指数之比：</p>
 
-        <pre><code>P(A 优于 B) = exp(score_A) / (exp(score_A) + exp(score_B))
+        <div class="math-equation" role="group" aria-label="Bradley-Terry 偏好概率">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="Bradley-Terry 偏好概率公式，可横向滚动">
+                <math display="block" aria-label="P(A 优于 B) 等于 exp(score_A) 除以 exp(score_A) 加 exp(score_B)">
+                    <mrow>
+                        <mi>P</mi><mo>(</mo><mi>A</mi><mo>≻</mo><mi>B</mi><mo>)</mo><mo>=</mo>
+                        <mfrac>
+                            <mrow><mi>exp</mi><mo>(</mo><mi>score</mi><msub><mi></mi><mi>A</mi></msub><mo>)</mo></mrow>
+                            <mrow><mi>exp</mi><mo>(</mo><mi>score</mi><msub><mi></mi><mi>A</mi></msub><mo>)</mo><mo>+</mo><mi>exp</mi><mo>(</mo><mi>score</mi><msub><mi></mi><mi>B</mi></msub><mo>)</mo></mrow>
+                        </mfrac>
+                    </mrow>
+                </math>
+            </div>
+        </div>
 
-在 RLHF 的语境下，我们将这个"强度值"理解为奖励函数 r(x, y) —— 给定 prompt x 和回答 y，模型认为这个回答有多"好"。于是：
+        <p>在 RLHF 的语境下，我们将这个“强度值”理解为奖励函数 r(x, y)：给定 prompt x 和回答 y，模型认为这个回答有多“好”。代入并化简后，偏好概率等于 sigmoid 作用于两条回答的奖励差：</p>
 
-P(y_c 优于 y_r | x) = exp(r(x, y_c)) / (exp(r(x, y_c)) + exp(r(x, y_r)))
-                    = σ(r(x, y_c) − r(x, y_r))</code></pre>
+        <div class="math-equation" role="group" aria-label="偏好概率等于奖励差经过 sigmoid">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="偏好概率公式，可横向滚动">
+                <math display="block" aria-label="P(y_c 优于 y_r 给定 x) 等于 sigmoid 作用于 r(x,y_c) 减 r(x,y_r)">
+                    <mrow>
+                        <mi>P</mi><mo>(</mo><msub><mi>y</mi><mi>c</mi></msub><mo>≻</mo><msub><mi>y</mi><mi>r</mi></msub><mo>∣</mo><mi>x</mi><mo>)</mo><mo>=</mo>
+                        <mi>σ</mi><mo>(</mo><mi>r</mi><mo>(</mo><mi>x</mi><mo>,</mo><msub><mi>y</mi><mi>c</mi></msub><mo>)</mo><mo>−</mo><mi>r</mi><mo>(</mo><mi>x</mi><mo>,</mo><msub><mi>y</mi><mi>r</mi></msub><mo>)</mo><mo>)</mo>
+                    </mrow>
+                </math>
+            </div>
+        </div>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig15-title fig15-desc" viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig15-title">从同一 prompt 的偏好对到奖励差的映射</title>
+                <desc id="fig15-desc">同一 prompt 产生两条回答，分别经奖励函数打分，奖励差经 sigmoid 得到选择概率，概率大于 0.5 时标为 chosen。</desc>
+                <rect width="800" height="240" rx="16" fill="#faf8ff"/>
+                <g font-size="15" text-anchor="middle" fill="#3b1d78">
+                    <rect x="30" y="90" width="120" height="60" rx="12" fill="#e8e2ff"/><text x="90" y="118">prompt x</text><text x="90" y="138" font-size="12" fill="#5b21b6">同一个输入</text>
+                    <rect x="300" y="30" width="170" height="52" rx="12" fill="#ffe9d6"/><text x="385" y="62" font-size="14">回答 y_c（chosen）</text>
+                    <rect x="300" y="158" width="170" height="52" rx="12" fill="#ffe9d6"/><text x="385" y="190" font-size="14">回答 y_r（rejected）</text>
+                    <rect x="560" y="90" width="210" height="60" rx="12" fill="#d6f1eb"/><text x="665" y="115" font-size="14">σ(r(y_c)−r(y_r))</text><text x="665" y="137" font-size="12" fill="#0f6f66">选择概率 &gt; 0.5</text>
+                </g>
+                <path d="M150 120 H225 M225 120 V56 H300 M225 120 V184 H300" stroke="#8b5cf6" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path d="M470 56 H515 V120 H560 M470 184 H515 V120" stroke="#8b5cf6" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </svg>
+            <figcaption>偏好对把两条回答放在同一 prompt 下比较：奖励差经 sigmoid 得到“y_c 更好”的概率，概率越大说明奖励函数越确信两条回答存在质量差距；这正是成对数据优于绝对打分的根本原因。</figcaption>
+        </figure>
 
         <p>其中 σ 是 sigmoid 函数。<strong>这个公式是整个偏好对齐理论的基石</strong>。它告诉我们：偏好数据本质上是在编码一个潜在的奖励函数——当我们记录"对于 prompt x，回答 y_c 比 y_r 好"时，我们实际上是在隐式地标注了一个不等式 r(x, y_c) > r(x, y_r)。</p>
 
@@ -146,18 +197,28 @@ P(y_c 优于 y_r | x) = exp(r(x, y_c)) / (exp(r(x, y_c)) + exp(r(x, y_r)))
 
         <p>Cohen's Kappa 是最常用的标注者间一致性指标。它的计算考虑了随机一致的概率，比简单的"一致率"更可靠：</p>
 
-        <pre><code>κ = (P_observed − P_expected) / (1 − P_expected)
+        <div class="math-equation" role="group" aria-label="Cohen's Kappa 公式">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="Cohen's Kappa 公式，可横向滚动">
+                <math display="block" aria-label="kappa 等于 P_observed 减 P_expected，除以 1 减 P_expected">
+                    <mrow>
+                        <mi>κ</mi><mo>=</mo>
+                        <mfrac>
+                            <mrow><msub><mi>P</mi><mtext>observed</mtext></msub><mo>−</mo><msub><mi>P</mi><mtext>expected</mtext></msub></mrow>
+                            <mrow><mn>1</mn><mo>−</mo><msub><mi>P</mi><mtext>expected</mtext></msub></mrow>
+                        </mfrac>
+                    </mrow>
+                </math>
+            </div>
+        </div>
 
-其中：
-- P_observed = 标注者间实际一致的比例
-- P_expected = 随机情况下标注者一致的概率
-
-κ 值解读：
-- κ &lt; 0.20：一致性很差，数据不可用
-- 0.20 ≤ κ &lt; 0.40：一致性一般，需加强标注培训
-- 0.40 ≤ κ &lt; 0.60：中等一致性，可用但有噪声
-- 0.60 ≤ κ &lt; 0.80：高度一致，数据质量良好
-- κ ≥ 0.80：几乎完美一致，非常可靠</code></pre>
+        <p>其中 P_observed 为标注者间实际一致的比例，P_expected 为随机情况下标注者一致的概率。κ 值解读：</p>
+        <ul>
+            <li>κ &lt; 0.20：一致性很差，数据不可用</li>
+            <li>0.20 ≤ κ &lt; 0.40：一致性一般，需加强标注培训</li>
+            <li>0.40 ≤ κ &lt; 0.60：中等一致性，可用但有噪声</li>
+            <li>0.60 ≤ κ &lt; 0.80：高度一致，数据质量良好</li>
+            <li>κ ≥ 0.80：几乎完美一致，非常可靠</li>
+        </ul>
 
         <p>在实际项目中，建议至少每个批次安排 10-20% 的样本由双标注者独立标注，以持续监控 Cohen's Kappa。如果 κ 值低于 0.4，说明标注标准可能不清晰或标注者培训不足，需要立即干预。</p>
 
@@ -241,12 +302,23 @@ P(y_c 优于 y_r | x) = exp(r(x, y_c)) / (exp(r(x, y_c)) + exp(r(x, y_r)))
 
         <p>到这里，我们已经建立了偏好数据的完整认知基础：从 Bradley-Terry 模型的数学原理，到标准数据格式和质量标准，再到不同对齐算法对数据的需求差异。下一章，我们将走进全球四大偏好数据标杆——看看业界最优秀的偏好数据集是什么样的，它们各自有什么特色和应用场景。</p>
 
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>Bradley–Terry 模型原始提出：Bradley &amp; Terry, <em>Rank Analysis of Incomplete Block Designs</em>, Biometrika, 1952。</li>
+            <li>HH-RLHF（成对偏好数据的代表性发布）— <a href="https://arxiv.org/abs/2204.05862">arXiv:2204.05862</a></li>
+            <li>Deep RL from Human Preferences（奖励模型 + 偏好概率形式）— <a href="https://arxiv.org/abs/1706.03741">arXiv:1706.03741</a></li>
+            <li>DPO: Direct Preference Optimization — <a href="https://arxiv.org/abs/2305.18290">arXiv:2305.18290</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于本节数字的口径：</strong>“成对排序一致性比绝对打分高约 20–30 个百分点”以及“偏好数据成本约为单条 SFT 的 2–3 倍”为课程内教学示意，未附具体论文链接；κ 的分档为通用的经验参考值，不属于本章实测数据，读者应以原始研究为准。
+        </div>
+
         <div class="footer-nav">
             <a href="14.html">← 上一章</a>
             <a href="index.html">📖 返回目录</a>
             <a href="16.html">下一章 →</a>
         </div>
-    </div>
+    </main>
 </div>
 </div>
 </body>
