@@ -5,11 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第23章 数据质量管线搭建</title>
     <link rel="stylesheet" href="theme.css">
-</head>
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        a { overflow-wrap: anywhere; }
+        table { display: block; overflow-x: auto; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        a:focus-visible, button:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +54,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第23章 数据质量管线搭建</h2>
+        <h1>第23章 数据质量管线搭建</h1>
 
         <p>大家好，我是你们的讲师。经过前面整整22章的积累，我们分别从SFT数据、偏好数据、推理数据和Agent数据等多个维度，深入了解了后训练数据的各种形态和来源。但有一个问题贯穿始终：<strong>这些数据在进入训练框架之前，到底要经过哪些清洗和转换步骤？</strong></p>
 
@@ -95,6 +108,28 @@
    ┗─ 写入目标格式（JSONL / Parquet / Arrow）
     ↓
 就绪的训练数据集</code></pre>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig23-title fig23-desc" viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig23-title">六步数据质量管线的顺序</title>
+                <desc id="fig23-desc">原始数据依次经过去重、质量过滤、PII 脱敏、去污、采样与重平衡、格式转换，最后输出就绪的训练数据集。</desc>
+                <rect width="640" height="230" rx="16" fill="#fdfcff"/>
+                <g font-size="12.5" text-anchor="middle" fill="#3b1d78">
+                    <rect x="25" y="40" width="120" height="56" rx="12" fill="#efeaff"/><text x="85" y="73">原始数据集</text>
+                    <rect x="185" y="40" width="120" height="56" rx="12" fill="#e8e2ff"/><text x="245" y="65">① 去重</text><text x="245" y="83" font-size="10.5">精确/近似/语义</text>
+                    <rect x="345" y="40" width="120" height="56" rx="12" fill="#e8e2ff"/><text x="405" y="65">② 质量过滤</text><text x="405" y="83" font-size="10.5">规则/分类器</text>
+                    <rect x="505" y="40" width="120" height="56" rx="12" fill="#e8e2ff"/><text x="565" y="65">③ PII 脱敏</text><text x="565" y="83" font-size="10.5">掩码/删除</text>
+                    <rect x="505" y="140" width="120" height="56" rx="12" fill="#e8e2ff"/><text x="565" y="165">④ 去污</text><text x="565" y="183" font-size="10.5">n-gram 重叠</text>
+                    <rect x="345" y="140" width="120" height="56" rx="12" fill="#e8e2ff"/><text x="405" y="165">⑤ 采样重平衡</text><text x="405" y="183" font-size="10.5">难度/领域</text>
+                    <rect x="185" y="140" width="120" height="56" rx="12" fill="#e8e2ff"/><text x="245" y="165">⑥ 格式转换</text><text x="245" y="183" font-size="10.5">JSONL/Parquet</text>
+                    <rect x="25" y="140" width="120" height="56" rx="12" fill="#d6f1eb"/><text x="85" y="173">就绪数据集</text>
+                </g>
+                <path d="M145 68 H185 M305 68 H345 M465 68 H505" stroke="#8b5cf6" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M565 96 V140" stroke="#8b5cf6" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M505 168 H465 M345 168 H305 M185 168 H145" stroke="#8b5cf6" stroke-width="3.5" stroke-linecap="round"/>
+            </svg>
+            <figcaption>六步管线按固定顺序串联（图中采用蛇形排布以便在窄屏上仍可读）：先去重、再质量过滤与 PII 脱敏、然后去污、最后采样重平衡与格式转换。顺序不可随意打乱——先看清数据分布、再决定采样权重，是各步骤之间的隐含依赖。</figcaption>
+        </figure>
 
         <h3>① 去重——告别数据冗余</h3>
 
@@ -429,12 +464,21 @@ if __name__ == "__main__":
 
         <p>下一个话题，数据准备好了，管线也搭好了——但训练框架认得我们的数据格式吗？<strong>第24章：训练框架数据适配，我们将剖析TRL、Axolotl和LLaMA-Factory三大框架的数据格式要求，并手把手教你完成格式转换适配。</strong></p>
 
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>FineWeb / FineWeb2 数据集与方法论 — <a href="https://arxiv.org/abs/2406.17557">arXiv:2406.17557</a></li>
+            <li>NVIDIA NeMo Curator 官方文档（GPU 加速去重、分类器等）— <a href="https://docs.nvidia.com/nemo/curator/">docs.nvidia.com/nemo/curator</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于性能数字的口径：</strong>“64 张 A100、1.8 小时完成 1.1T token 去重”转录自 NeMo Curator 的官方基准（页面正文已注明来源属性），非本课程实测；实际耗时取决于硬件、数据分布与参数设置，读者应以 NVIDIA 官方基准页为准。
+        </div>
+
         <div class="footer-nav">
             <a href="22.html">← 上一章</a>
             <a href="index.html">📖 返回目录</a>
             <a href="24.html">下一章 →</a>
         </div>
-    </div>
+    </main>
 </div>
 </div>
 </body>
