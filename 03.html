@@ -5,11 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第3章 数据格式与标准规范</title>
     <link rel="stylesheet" href="theme.css">
-</head>
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        a { overflow-wrap: anywhere; }
+        table { display: block; overflow-x: auto; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        .stepper { margin: 1.2rem 0; border: 1px solid #e2d9f7; border-radius: 18px; padding: 1rem; background: #fdfcff; }
+        .stepper-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
+        .stepper-tabs button { font: inherit; font-size: 0.9rem; cursor: pointer; padding: 0.3rem 1rem; border-radius: 30px; border: 1px solid #c4b5fd; background: #f5f3ff; color: #5b21b6; }
+        .stepper-tabs button[aria-pressed="true"] { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+        a:focus-visible, button:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +58,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第3章 数据格式与标准规范</h2>
+        <h1>第3章 数据格式与标准规范</h1>
 
         <p>大家好，我是你们的讲师。我有一个真实的故事想分享给你。</p>
 
@@ -67,6 +84,30 @@
 }</code></pre>
 
         <p>三个字段的含义非常直观：<code>instruction</code> 描述任务指令，<code>input</code> 是任务的输入内容（可以为空），<code>output</code> 是期望的模型输出。这种格式特别适合单轮指令任务，在训练时通常会将 instruction 和 input 拼接作为模型的输入，output 作为预测目标。</p>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig3-title fig3-desc" viewBox="0 0 820 250" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig3-title">三类后训练数据格式的字段结构</title>
+                <desc id="fig3-desc">SFT 指令格式由 instruction、可选的 input 与 output 组成；多轮对话格式由 messages 数组的 role 与 content 组成；偏好格式由 prompt、chosen、rejected 组成。</desc>
+                <rect width="820" height="250" rx="16" fill="#fdfcff"/>
+                <g font-size="13" text-anchor="middle" fill="#3b1d78">
+                    <text x="150" y="34" font-size="15" font-weight="600">SFT 指令格式</text>
+                    <rect x="45" y="50" width="210" height="40" rx="10" fill="#e8e2ff"/><text x="150" y="75">instruction（必填）</text>
+                    <rect x="45" y="100" width="210" height="40" rx="10" fill="#efeaff"/><text x="150" y="125">input（可选）</text>
+                    <rect x="45" y="150" width="210" height="40" rx="10" fill="#e8e2ff"/><text x="150" y="175">output（目标）</text>
+                    <text x="410" y="34" font-size="15" font-weight="600">多轮对话格式</text>
+                    <rect x="305" y="50" width="210" height="40" rx="10" fill="#d6f1eb"/><text x="410" y="75">messages[]</text>
+                    <rect x="305" y="100" width="210" height="40" rx="10" fill="#e6f7f3"/><text x="410" y="125">role: system/user/assistant</text>
+                    <rect x="305" y="150" width="210" height="40" rx="10" fill="#e6f7f3"/><text x="410" y="175">content</text>
+                    <text x="670" y="34" font-size="15" font-weight="600">偏好格式</text>
+                    <rect x="565" y="50" width="210" height="40" rx="10" fill="#ffe9d6"/><text x="670" y="75">prompt</text>
+                    <rect x="565" y="100" width="210" height="40" rx="10" fill="#fff2e4"/><text x="670" y="125">chosen</text>
+                    <rect x="565" y="150" width="210" height="40" rx="10" fill="#fff2e4"/><text x="670" y="175">rejected</text>
+                </g>
+                <path d="M255 120 H305 M515 120 H565" stroke="#c4b5fd" stroke-width="3" stroke-dasharray="6 6"/>
+            </svg>
+            <figcaption>三类格式的字段骨架：SFT 指令格式以 instruction/input/output 为单位；多轮对话把每轮封装进 messages 数组，用 role 区分说话人；偏好格式用 prompt 固定上下文、用 chosen/rejected 承载对比信号。字段名选错、字段值全部落空，正是本章开头那次 loss 震荡的根因。</figcaption>
+        </figure>
 
         <h3>多轮对话格式：messages 数组</h3>
 
@@ -182,6 +223,21 @@ print(converted[0]["messages"][:2])
 # 保存为标准格式
 converted.to_json("converted_data.json", orient="records")</code></pre>
 
+        <div class="stepper">
+            <p><strong>格式对照（点按钮查看同一条样本的两种写法）：</strong></p>
+            <div class="stepper-tabs" role="group" aria-label="格式切换">
+                <button type="button" id="btn-sharegpt" aria-pressed="true">ShareGPT 格式</button>
+                <button type="button" id="btn-openai" aria-pressed="false">OpenAI Chat 格式</button>
+            </div>
+            <pre><code id="fmt-code">[
+  {"id": "sample_001", "conversations": [
+    {"from": "human", "value": "你好，帮我写个冒泡排序"},
+    {"from": "gpt",   "value": "好的，下面是 Python 实现：..."}
+  ]}
+]</code></pre>
+            <p>两种写法描述的是同一段对话，只是外层字段（conversations vs messages）和角色名（human/gpt vs user/assistant）不同；转换脚本的任务就是把它们一一对应映射过去。</p>
+        </div>
+
         <p>这段代码虽然简单，但在实际项目中每天都要运行——数据团队不断从不同渠道采集新数据，统一的格式转换管线是确保数据质量的第一道关卡。</p>
 
         <h2>3.4 常见格式陷阱</h2>
@@ -235,13 +291,39 @@ converted.to_json("converted_data.json", orient="records")</code></pre>
 
         <p>掌握了数据格式之后，下一个问题自然是——<strong>这些数据从哪里来？如何高效地获取高质量的后训练数据？让我们进入第 4 章：数据来源与采集策略。</strong></p>
 
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>Stanford Alpaca（instruction/input/output 格式的起源）— <a href="https://crfm.stanford.edu/2023/03/13/alpaca.html">crfm.stanford.edu/2023/03/13/alpaca.html</a></li>
+            <li>OpenAI Chat Completions 消息格式 — <a href="https://platform.openai.com/docs/api-reference/chat">platform.openai.com/docs/api-reference/chat</a></li>
+            <li>ShareGPT 格式数据（conversations / from / value）— <a href="https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered">HuggingFace: ShareGPT_Vicuna_unfiltered</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于示例口径：</strong>本章开头的“近 200 万条 SFT 数据”“训练三天”等为教学化的场景描述，不是可核验的实验记录；字段名与转换映射以 Alpaca 与 OpenAI 官方文档为准。
+        </div>
+
         <div class="footer-nav">
             <a href="02.html">← 上一章</a>
             <a href="index.html">📖 返回目录</a>
             <a href="04.html">下一章 →</a>
         </div>
-    </div>
+    </main>
 </div>
 </div>
+<script>
+    (function () {
+        var sharegpt = '\n  {"id": "sample_001", "conversations": [\n    {"from": "human", "value": "你好，帮我写个冒泡排序"},\n    {"from": "gpt",   "value": "好的，下面是 Python 实现：..."}\n  ]}\n';
+        var openai = '\n  {"id": "sample_001", "messages": [\n    {"role": "user",      "content": "你好，帮我写个冒泡排序"},\n    {"role": "assistant", "content": "好的，下面是 Python 实现：..."}\n  ]}\n';
+        var code = document.getElementById('fmt-code');
+        var bS = document.getElementById('btn-sharegpt');
+        var bO = document.getElementById('btn-openai');
+        function show(which) {
+            code.textContent = which === 'openai' ? openai : sharegpt;
+            bS.setAttribute('aria-pressed', which === 'openai' ? 'false' : 'true');
+            bO.setAttribute('aria-pressed', which === 'openai' ? 'true' : 'false');
+        }
+        bS.addEventListener('click', function () { show('sharegpt'); });
+        bO.addEventListener('click', function () { show('openai'); });
+    })();
+</script>
 </body>
 </html>
