@@ -5,11 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第28章 综合实战：从零构建后训练数据流水线</title>
     <link rel="stylesheet" href="theme.css">
-</head>
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        a { overflow-wrap: anywhere; }
+        table { display: block; overflow-x: auto; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        a:focus-visible, button:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +54,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html" class="active">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第28章 综合实战：从零构建后训练数据流水线</h2>
+        <h1>第28章 综合实战：从零构建后训练数据流水线</h1>
 
         <p>大家好，我是你们的讲师。欢迎来到本课程的最后一章。在过去的27章中，我们一起走过了一条完整的知识路径：从后训练数据的核心概念（第1-6章），到主流数据集的深入剖析（第7-14章），再到偏好对齐和推理增强数据（第15-22章），接着是工程体系和合规（第23-25章），最后是前沿趋势和策略设计（第26-27章）。</p>
 
@@ -70,6 +83,25 @@ post-training-pipeline/
 │   └── final/               ← 最终训练数据
 └── reports/
     └── validation_report.html  ← 质量验证报告</code></pre>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig28-title fig28-desc" viewBox="0 0 820 200" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig28-title">端到端后训练数据流水线的六个步骤</title>
+                <desc id="fig28-desc">从数据集选择与下载，经清洗去重、配比混合、偏好数据构造、格式转换导出，到质量验证，最终产出 SFT 与 DPO 训练数据。</desc>
+                <rect width="820" height="200" rx="16" fill="#fdfcff"/>
+                <g font-size="12" text-anchor="middle" fill="#3b1d78">
+                    <rect x="18" y="45" width="125" height="56" rx="12" fill="#efeaff"/><text x="80" y="68">① 数据集选择</text><text x="80" y="86" font-size="10.5">下载与去重前置</text>
+                    <rect x="152" y="45" width="125" height="56" rx="12" fill="#e8e2ff"/><text x="215" y="68">② 清洗与去重</text><text x="215" y="86" font-size="10.5">MinHash / 质量</text>
+                    <rect x="286" y="45" width="125" height="56" rx="12" fill="#e8e2ff"/><text x="348" y="68">③ 配比混合</text><text x="348" y="86" font-size="10.5">多源加权采样</text>
+                    <rect x="420" y="45" width="125" height="56" rx="12" fill="#e8e2ff"/><text x="483" y="68">④ 偏好构造</text><text x="483" y="86" font-size="10.5">chosen/rejected</text>
+                    <rect x="554" y="45" width="125" height="56" rx="12" fill="#e8e2ff"/><text x="616" y="68">⑤ 格式转换</text><text x="616" y="86" font-size="10.5">JSONL / Parquet</text>
+                    <rect x="688" y="45" width="125" height="56" rx="12" fill="#d6f1eb"/><text x="750" y="68">⑥ 质量验证</text><text x="750" y="86" font-size="10.5">抽样与报告</text>
+                </g>
+                <path d="M143 73 H152 M277 73 H286 M411 73 H420 M545 73 H554 M679 73 H688" stroke="#8b5cf6" stroke-width="3.5" stroke-linecap="round"/>
+                <text x="410" y="150" text-anchor="middle" font-size="11.5" fill="#0f6f66">数据落点：data/raw → data/cleaned → data/final；验证报告写入 reports/validation_report.html</text>
+            </svg>
+            <figcaption>六步端到端流水线：前三步把多源数据变成“干净且配比合理”的语料，第四步补上偏好对比对，最后两步导出统一格式并抽样验收。每一步都对应一个可单独重跑的脚本，便于出问题时从中间续跑。</figcaption>
+        </figure>
 
         <p>这个项目的目标是为一个<strong>通用中文对话模型</strong>构建完整的 SFT + DPO 数据流水线。我们选择了四个经过验证的开源数据集作为输入。为什么选这四个？它们分别覆盖了通用能力、中文对话、中文指令和安全对齐四个维度——正如我们在第27章"中文模型"场景中推荐的方案。</p>
 
@@ -537,12 +569,23 @@ if __name__ == "__main__":
 
         <p>感谢你一路跟随到第28章。我是你们的讲师，希望这门课程对你有帮助。后训练数据的世界在快速进化，保持好奇，持续学习。<strong>我们下次再见！</strong></p>
 
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>DPO: Direct Preference Optimization — <a href="https://arxiv.org/abs/2305.18290">arXiv:2305.18290</a></li>
+            <li>HH-RLHF（偏好对数据的公开示例）— <a href="https://arxiv.org/abs/2204.05862">arXiv:2204.05862</a></li>
+            <li>FineWeb / FineWeb2（质量过滤与去重方法论）— <a href="https://arxiv.org/abs/2406.17557">arXiv:2406.17557</a></li>
+            <li>LIMA: Less Is More for Alignment（小数据高质量策略）— <a href="https://arxiv.org/abs/2305.11206">arXiv:2305.11206</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于代码的口径：</strong>本章脚本为教学演示的简化实现（依赖 datasets、scikit-learn / datasketch 等），未包含分布式与容错处理，也未附运行环境锁定；直接用于生产前需补充异常处理、日志与版本控制。请以各数据集卡片的许可与字段说明为准。
+        </div>
+
         <div class="footer-nav">
             <a href="27.html">← 上一章</a>
             <a href="index.html">📖 返回目录</a>
             <a href="javascript:void(0)">下一章 →</a>
         </div>
-    </div>
+    </main>
 </div>
 </div>
 </body>
