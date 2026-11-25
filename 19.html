@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第19章 思维链(CoT)推理数据</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,14 +56,14 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第19章 思维链（CoT）推理数据</h2>
+        <h1>第19章 思维链（CoT）推理数据</h1>
 
         <p>大家好，我是你们的讲师。在之前十几章的内容中，我们完整走过了 SFT 数据和偏好对齐数据的方方面面。从第 10 章"推理增强 SFT 数据集"开始，你已经接触到了"让模型学会推理"这个概念。但坦白讲，之前讨论的推理数据还停留在比较浅的层面——主要是模型输出最终答案，只是答案本身需要逻辑推导。这一章，我们要讨论的是一个更深层、更根本的范式转变：<strong>从「给出答案」到「展示思考过程」</strong>。</p>
 
-        <h2>从「给出答案」到「展示思考过程」——推理模型的灵魂</h2>
+        <h2>从给出答案到展示思考过程：推理模型的灵魂</h2>
 
         <p>传统 SFT 数据的结构非常简单：instruction → response。模型看到一个数学问题，直接输出答案。但人类解决复杂问题时，几乎从来不会一步到位——我们会在草稿纸上写写画画、尝试不同思路、回溯检查——这一系列「思考过程」恰恰是最有价值的训练信号。</p>
 
@@ -194,6 +209,28 @@
 
         <p>CoT 蒸馏的标准流程——被称为<strong>冷启动 SFT + RL 两步法</strong>——在 DeepSeek-R1 的技术报告中得到了最系统的阐述：</p>
 
+        <figure>
+            <svg role="img" aria-labelledby="fig19-title fig19-desc" viewBox="0 0 880 260" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig19-title">CoT 蒸馏的冷启动 SFT 与 RL 两步流程</title>
+                <desc id="fig19-desc">教师模型生成 CoT 轨迹，经答案验证与质量过滤后用于小模型的冷启动 SFT，再进行 GRPO 等强化学习增强，最终得到具备推理能力的小模型。</desc>
+                <rect width="880" height="260" rx="16" fill="#faf8ff"/>
+                <g font-size="12.5" font-weight="700" text-anchor="middle">
+                    <rect x="30" y="80" width="180" height="74" rx="12" fill="#e8e2ff"/><text x="120" y="112" fill="#3b1d78">教师模型</text><text x="120" y="133" font-size="10.5" font-weight="400" fill="#5b21b6">生成 CoT 轨迹</text>
+                    <rect x="250" y="80" width="180" height="74" rx="12" fill="#ffe9d6"/><text x="340" y="112" fill="#9a4b16">答案验证 +</text><text x="340" y="133" font-size="10.5" font-weight="400" fill="#9a4b16">质量过滤 / 剪枝</text>
+                    <rect x="470" y="80" width="170" height="74" rx="12" fill="#d6f1eb"/><text x="555" y="112" fill="#0f6f66">冷启动 SFT</text><text x="555" y="133" font-size="10.5" font-weight="400" fill="#0f6f66">小模型学推理</text>
+                    <rect x="680" y="80" width="170" height="74" rx="12" fill="#e0f2fe"/><text x="765" y="112" fill="#075985">RL 增强</text><text x="765" y="133" font-size="10.5" font-weight="400" fill="#075985">GRPO / 可验证奖励</text>
+                </g>
+                <g stroke="#8b5cf6" stroke-width="3" marker-end="url(#a19)">
+                    <line x1="210" y1="117" x2="248" y2="117"/><line x1="430" y1="117" x2="468" y2="117"/><line x1="640" y1="117" x2="678" y2="117"/>
+                </g>
+                <defs><marker id="a19" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8b5cf6"/></marker></defs>
+                <text x="30" y="196" font-size="12" fill="#9b1c1c">丢失：步骤跳跃、逻辑错误的轨迹会在过滤阶段被丢弃——</text>
+                <text x="30" y="218" font-size="12" fill="#9b1c1c">“答案正确但推理错误”的样本比错误答案危害更大。</text>
+                <text x="30" y="242" font-size="11.5" fill="#9a4b16">* 流程按 DeepSeek-R1 技术报告归纳，细节以原文为准。</text>
+            </svg>
+            <figcaption>CoT 蒸馏不是“把教师输出直接拿来用”：先验证答案、再剪掉冗余与错误推理，才进入冷启动 SFT 和 RL。过滤环节的严格程度，直接决定学生模型学到的是“推理”还是“表演推理”。</figcaption>
+        </figure>
+
         <pre><code>阶段一：冷启动 SFT（Cold-Start SFT）
     1. 用教师模型（如 DeepSeek-R1）在大规模问题上生成 CoT 轨迹
     2. 过滤掉答案错误的轨迹（答案验证）
@@ -267,6 +304,17 @@
         </div>
 
         <p>掌握了 CoT 数据的构建、蒸馏和质量评估方法之后，你可能会问：有了这些高质量的 CoT 数据之后，下一步是什么？答案是强化学习。仅仅通过 SFT 阶段的 CoT 训练，模型学会了"如何展示推理过程"，但还没有学会"如何通过试错来提升推理质量"。这正是我们下一章要讨论的主题——<strong>GRPO（Group Relative Policy Optimization）和 RLVR（Rule-Based Verifiable Rewards）——如何让模型在推理中自我改进、自我纠错。</strong></p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>Chain-of-Thought Prompting Elicits Reasoning in Large Language Models — <a href="https://arxiv.org/abs/2201.11903">arXiv:2201.11903</a></li>
+            <li>ThoughtSource：统一 CoT 数据集 — <a href="https://arxiv.org/abs/2305.11859">arXiv:2305.11859</a></li>
+            <li>OpenThoughts：开放推理数据构建 — <a href="https://arxiv.org/abs/2506.04178">arXiv:2506.04178</a></li>
+            <li>DeepSeek-R1（冷启动 SFT + RL 两步法）— <a href="https://arxiv.org/abs/2501.12948">arXiv:2501.12948</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>ThoughtSource“超过百万条”、OpenThoughts3-114K/1.2M、DeepSeekMath-SFT“~120 万条”、NuminaMath-CoT“~860K”均以各自论文与数据集卡片为准，会随版本变化；“多教师投票提升 5-8%”“114K 不输 1.2M”等为课程内经验引述与教学示意，未附可核验的原始实验编号，不应直接引用为实验证据。
+        </div>
 
         <div class="footer-nav">
             <a href="18.html">← 上一章</a>
