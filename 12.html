@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第12章 垂直领域SFT数据</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第12章 垂直领域SFT数据</h2>
+        <h1>第12章 垂直领域SFT数据</h1>
 
         <p>前面几章我们讨论了各种各样的通用数据集。通用数据集的目标是让模型成为一个"知识渊博的万事通"。然而在真实的产品需求中，我们往往需要模型在<strong>某个特定领域</strong>表现出色——比如写代码、做数学题、回答医疗问题、分析财务报表。一个什么都懂但什么都不精的模型，很多时候不如一个"领域专家"受用户欢迎。</p>
 
@@ -183,6 +198,26 @@ A:
         <h3>策略三：两阶段训练</h3>
         <p>先做通用 SFT（全量通用数据），再做领域 SFT（只使用领域数据）。这种策略的优势是：第一阶段的通用训练建立了完整的语言和指令遵循能力，第二阶段的领域训练在不破坏通用能力的前提下强化领域专长。但风险是第二阶段可能出现灾难性遗忘。</p>
 
+        <figure>
+            <svg role="img" aria-labelledby="fig12-title fig12-desc" viewBox="0 0 880 260" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig12-title">领域数据与通用数据的三种配比策略</title>
+                <desc id="fig12-desc">全量替换只用领域数据；增量混合以通用数据为主、混入部分领域数据；两阶段训练先全量通用再领域为主并保留少量通用数据防止遗忘。</desc>
+                <rect width="880" height="260" rx="16" fill="#faf8ff"/>
+                <g font-size="12.5" font-weight="700" fill="#3b1d78">
+                    <text x="30" y="92">① 全量替换</text>
+                    <text x="30" y="152">② 增量混合</text>
+                    <text x="30" y="216">③ 两阶段</text>
+                </g>
+                <rect x="170" y="62" width="640" height="44" rx="8" fill="#db2777"/><text x="490" y="89" text-anchor="middle" font-size="12.5" fill="#fff">领域数据 100%</text>
+                <rect x="170" y="122" width="480" height="44" rx="8" fill="#7c3aed"/><text x="410" y="149" text-anchor="middle" font-size="12.5" fill="#fff">通用 70-80%</text>
+                <rect x="650" y="122" width="160" height="44" rx="8" fill="#db2777"/><text x="730" y="149" text-anchor="middle" font-size="12.5" fill="#fff">领域 20-30%</text>
+                <rect x="170" y="182" width="640" height="20" rx="6" fill="#7c3aed"/><text x="820" y="197" font-size="11" fill="#5b21b6">阶段一：通用 100%</text>
+                <rect x="170" y="208" width="576" height="20" rx="6" fill="#db2777"/><rect x="746" y="208" width="64" height="20" rx="6" fill="#7c3aed"/><text x="820" y="223" font-size="11" fill="#9a4b16">阶段二：领域为主 + 少量通用防遗忘</text>
+                <text x="30" y="246" font-size="11.5" fill="#9a4b16">* 比例为教学示意，非实测最优值。</text>
+            </svg>
+            <figcaption>三种领域数据混合策略的成本与风险一目了然：全量替换会牺牲通用能力，增量混合最稳妥，两阶段训练能分步提升但对第二阶段的数据配比更敏感。</figcaption>
+        </figure>
+
         <pre><code># 两阶段训练示意
 # Phase 1: 通用 SFT
 通用数据 = load_dataset("teknium/OpenHermes-2.5", split="train")
@@ -209,6 +244,17 @@ train_with(混合数据)  # 领域强化，同时保持通用能力</code></pre>
         </div>
 
         <p>垂直领域的 SFT 数据让我们能把通用模型变成"专家"。但问题又来了——当你面前有几十个不同来源、不同领域的数据集时，<strong>如何决定谁多谁少？</strong>把 OpenHermes、UltraChat、GSM8K、Firefly 等数据按什么比例混合才能达到最佳效果？这不仅仅是"拍脑袋"的问题，而是一套严谨的实验设计方法。下一章，我们将进入<strong>SFT 数据配比与混合策略</strong>的实战环节，看看如何通过系统化的实验找到最适合你的数据配方。</p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>CodeAlpaca 代码指令数据集 — <a href="https://huggingface.co/datasets/sahil2801/CodeAlpaca-20k">sahil2801/CodeAlpaca-20k</a></li>
+            <li>StarCoder / The Stack / CommitPackFT（BigCode 项目）— <a href="https://arxiv.org/abs/2305.06161">arXiv:2305.06161</a></li>
+            <li>GSM8K — <a href="https://arxiv.org/abs/2110.14168">arXiv:2110.14168</a>；MATH — <a href="https://arxiv.org/abs/2103.03874">arXiv:2103.03874</a></li>
+            <li>Medical Meadow 医疗指令数据集 — <a href="https://arxiv.org/abs/2304.02751">arXiv:2304.02751</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>CodeAlpaca“约 2 万条”、CommitPackFT“约 400 万条”、Medical Meadow“10 万+ 条”、GSM8K/MATH 规模均来自各自论文或数据集卡片，可能随版本变化，应以平台最新描述为准。本章“70-80% 通用 + 20-30% 领域”“至少保留 30% 通用数据”等配比为教学示意与经验区间，非受人控实验结论。
+        </div>
 
         <div class="footer-nav">
             <a href="11.html">← 上一章</a>

@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第14章 SFT数据去噪与去重实战</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第14章 SFT数据去噪与去重实战</h2>
+        <h1>第14章 SFT数据去噪与去重实战</h1>
 
         <p>在第 13 章中我们花了大量精力来优化数据配比。但如果你的数据本身存在大量重复或噪声，再好的配比策略也救不了——这就像用优质的调料去烹饪腐烂的食材，结果可想而知。</p>
 
@@ -65,6 +80,36 @@
         <h2>去重技术栈</h2>
 
         <p>去重是数据清洗中最基础也最重要的环节。根据重复的"粒度"，去重技术可以分为三个层级：</p>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig14-title fig14-desc" viewBox="0 0 880 290" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig14-title">分层去重：从字面相同到语义相同</title>
+                <desc id="fig14-desc">精确去重处理逐字相同的样本，MinHash+LSH 处理词级近似重复，语义 Embedding 去重处理意思相同但用词不同的样本；三者计算量递增、可发现的重复类型也递增。</desc>
+                <rect width="880" height="290" rx="16" fill="#faf8ff"/>
+                <text x="30" y="36" font-size="13" font-weight="700" fill="#3b1d78">三层去重（从上到下逐步加宽）</text>
+                <g font-size="12.5" text-anchor="middle">
+                    <rect x="40" y="56" width="200" height="72" rx="12" fill="#d6f1eb"/><text x="140" y="86" font-weight="700" fill="#0f6f66">① 精确去重</text><text x="140" y="108" fill="#0f6f66">MD5 逐字相同</text>
+                    <rect x="340" y="56" width="200" height="72" rx="12" fill="#ffe9d6"/><text x="440" y="86" font-weight="700" fill="#9a4b16">② MinHash+LSH</text><text x="440" y="108" fill="#9a4b16">词级近似重复</text>
+                    <rect x="640" y="56" width="200" height="72" rx="12" fill="#e8e2ff"/><text x="740" y="86" font-weight="700" fill="#3b1d78">③ 语义 Embedding</text><text x="740" y="108" fill="#3b1d78">用词不同但同义</text>
+                </g>
+                <g stroke="#8b5cf6" stroke-width="3" marker-end="url(#a14)">
+                    <line x1="240" y1="92" x2="338" y2="92"/><line x1="540" y1="92" x2="638" y2="92"/>
+                </g>
+                <defs><marker id="a14" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8b5cf6"/></marker></defs>
+                <text x="40" y="158" font-size="12" fill="#53676d">计算量：低 → 高</text>
+                <text x="640" y="158" font-size="12" fill="#53676d">可发现重复类型：逐字 → 语义</text>
+                <text x="40" y="196" font-size="13" font-weight="700" fill="#9b1c1c">去重之后的“质量过滤流水线”（并行五道门）</text>
+                <g font-size="11.5" text-anchor="middle">
+                    <rect x="40" y="210" width="150" height="46" rx="10" fill="#fde2e2"/><text x="115" y="238" fill="#9b1c1c">长度过滤</text>
+                    <rect x="202" y="210" width="150" height="46" rx="10" fill="#fde2e2"/><text x="277" y="238" fill="#9b1c1c">语言检测</text>
+                    <rect x="364" y="210" width="150" height="46" rx="10" fill="#fde2e2"/><text x="439" y="238" fill="#9b1c1c">困惑度</text>
+                    <rect x="526" y="210" width="150" height="46" rx="10" fill="#fde2e2"/><text x="601" y="238" fill="#9b1c1c">格式完整性</text>
+                    <rect x="688" y="210" width="152" height="46" rx="10" fill="#fde2e2"/><text x="764" y="238" fill="#9b1c1c">毒性/不当内容</text>
+                </g>
+                <text x="40" y="278" font-size="11.5" fill="#9a4b16">* 移除比例为教学示意，应根据数据集实际分布调整阈值。</text>
+            </svg>
+            <figcaption>先分层去重、再做质量过滤，是投入产出比最高的清洗顺序。三层去重的计算量递增，建议按“精确→模糊→语义”逐层收窄，避免一上来就跑昂贵的 embedding。</figcaption>
+        </figure>
 
         <h3>精确去重</h3>
         <p>完全一样的字符串或经过简单归一化（去除空格、统一大小写）后完全一样的文本。这是最简单也最有效的方法——没有遗漏，也不会误伤。</p>
@@ -382,6 +427,16 @@ nemo_curator dedup \
         </div>
 
         <p>至此，我们完成了"第二部分：SFT 数据集深度解析"的全部内容。从第 7 章的 HuggingFace 生态入门，到本章的数据去重实战，你已掌握了 SFT 数据选型、配比和清洗的完整知识体系。从下一章开始，我们将进入第三部分更广阔的领域——<strong>偏好对齐数据</strong>。当模型已经学会了"如何回答"，下一步就是让它学会"什么回答更好"——这正是偏好数据要做的事，也是第 15 章：偏好对齐数据基础的开篇主题。</p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>Deduplicating Training Data Makes Language Models Better（去重对训练的价值）— <a href="https://arxiv.org/abs/2107.06499">arXiv:2107.06499</a></li>
+            <li>NeMo Curator（NVIDIA GPU 加速数据策管工具）— <a href="https://docs.nvidia.com/nemo-curator/">docs.nvidia.com/nemo-curator</a></li>
+            <li>datasketch：MinHash / LSH 的 Python 实现 — <a href="https://ekzhu.com/datasketch/">ekzhu.com/datasketch</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>本章“质量过滤流水线”中的移除比例、“去重前后效果对比”表中的所有数值、以及“NeMo Curator 1.8 小时内完成 1.1T token 去重”的说明，均为课程内引述与<strong>教学示意</strong>，未附可核验的原始实验编号；具体阈值与收益应以自己数据集的实测为准，不应直接引用为实验证据。
+        </div>
 
         <div class="footer-nav">
             <a href="13.html">← 上一章</a>

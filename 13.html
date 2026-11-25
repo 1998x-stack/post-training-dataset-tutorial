@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第13章 SFT数据配比与混合策略</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第13章 SFT数据配比与混合策略</h2>
+        <h1>第13章 SFT数据配比与混合策略</h1>
 
         <p>好，现在你手里有一堆数据集了。OpenHermes 2.5、UltraChat、GSM8K、Firefly、Medical Meadow……它们各有特色，看起来都不错。但问题来了：<strong>到底按什么比例混在一起呢？</strong></p>
 
@@ -112,6 +127,23 @@
         <h2>配比实验设计方法论</h2>
 
         <p>知道了起点，下一步就是找到针对你项目的"最优配比"。下面是一套被验证过的方法论：</p>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig13-title fig13-desc" viewBox="0 0 880 260" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig13-title">数据配比的三级实验阶梯</title>
+                <desc id="fig13-desc">从预实验、小规模消融到全量训练，数据规模和耗时逐级上升，目的从快速排除候选过渡到确认最优配比。</desc>
+                <rect width="880" height="260" rx="16" fill="#faf8ff"/>
+                <line x1="80" y1="232" x2="840" y2="232" stroke="#c4b5fd" stroke-width="2"/>
+                <rect x="110" y="152" width="180" height="80" rx="10" fill="#c4b5fd"/><text x="200" y="185" text-anchor="middle" font-size="13" font-weight="700" fill="#3b1d78">① 预实验</text><text x="200" y="208" text-anchor="middle" font-size="11.5" fill="#3b1d78">5k-10k 条</text>
+                <rect x="350" y="102" width="180" height="130" rx="10" fill="#8b5cf6"/><text x="440" y="152" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">② 小规模消融</text><text x="440" y="175" text-anchor="middle" font-size="11.5" fill="#fff">30k-50k 条</text>
+                <rect x="590" y="42" width="180" height="190" rx="10" fill="#6d28d9"/><text x="680" y="112" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">③ 全量训练</text><text x="680" y="135" text-anchor="middle" font-size="11.5" fill="#fff">数十万-百万条</text>
+                <text x="200" y="252" text-anchor="middle" font-size="11" fill="#53676d">目标：快速排除差配比</text>
+                <text x="440" y="252" text-anchor="middle" font-size="11" fill="#53676d">目标：控制变量选优</text>
+                <text x="680" y="252" text-anchor="middle" font-size="11" fill="#53676d">目标：确认稳定与绝对性能</text>
+                <text x="40" y="34" font-size="12" fill="#9a4b16">* 规模区间为教学示意，应按算力与时间预算调整</text>
+            </svg>
+            <figcaption>数据配比不是一次拍板，而是三级阶梯：预实验“排差”、消融“选优”、全量“定案”。每一级只比上一级多做一件事——这就是控制变量思想在数据配比上的落地。</figcaption>
+        </figure>
 
         <h3>步骤一：预实验（Pilot Experiment）</h3>
         <p>在几小时到一天内完成的小规模实验，目的是快速淘汰明显不好的配比。用 5,000-10,000 条训练数据（从各数据源按不同配比采样），在 7B 模型上训练几百步，看 loss 收敛情况和基础评测指标。这个阶段目标是"排出"而不是"选优"——找到几个看起来有潜力的配比候选。</p>
@@ -223,6 +255,15 @@ sample_weights = temperature_sampling(
         <p>数据配比看起来是一个"调比例"的简单活，实际上是一项需要严谨实验设计和细心观察的系统工程。一个合适的数据配比，能让模型的各项能力得到均衡发展；一个糟糕的配比，可能会让模型的某些能力严重受损，甚至产生意想不到的行为问题。</p>
 
         <p>有了好的配比策略之后，我们终于可以处理一个在整个后训练数据工程中不可或缺的环节——<strong>数据去噪与去重</strong>。不管数据配比多完美，如果数据中存在大量重复或噪声，一切都是白费功夫。第 14 章，我们将拿起工程工具，实战 SFT 数据的清洗、去重和质量过滤。</p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>LIMA: Less Is More for Alignment（“少即是多”与数据质量优先）— <a href="https://arxiv.org/abs/2305.11206">arXiv:2305.11206</a></li>
+            <li>InstructGPT（人工偏好与对齐评估方法）— <a href="https://arxiv.org/abs/2203.02155">arXiv:2203.02155</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>本章“典型配比参考”中的百分比区间、实验规模（5k-10k / 30k-50k）、以及“对话比例 20%→35% 使 MT-Bench 提升约 0.3”“安全样本 15% 导致过度拒绝”等案例描述，均为课程内引述与<strong>教学示意</strong>，未附可核验的原始实验编号，不应直接引用为实验证据。配比应以项目自己的消融实验为准。
+        </div>
 
         <div class="footer-nav">
             <a href="12.html">← 上一章</a>
