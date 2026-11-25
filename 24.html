@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第24章 训练框架数据适配</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第24章 训练框架数据适配</h2>
+        <h1>第24章 训练框架数据适配</h1>
 
         <p>大家好，我是你们的讲师。上一章我们搭建了一条完整的后训练数据质量管线，从去重到格式转换，把一堆"原材料"变成了"洁净的训练数据"。但一个新的问题出现了：<strong>这些干净的数据，不同训练框架认得吗？</strong></p>
 
@@ -59,6 +74,25 @@
             <li><strong>Axolotl</strong> —— 社区最流行的全流程微调工具，以配置文件驱动、支持广泛而著称</li>
             <li><strong>LLaMA-Factory</strong> —— 中文社区最主流的微调框架，对中文数据和模型的支持尤其出色</li>
         </ul>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig24-title fig24-desc" viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig24-title">messages 作为三大训练框架的统一交换格式</title>
+                <desc id="fig24-desc">TRL 首选 messages 格式，Axolotl 支持 sharegpt 与 alpaca，LLaMA-Factory 支持 alpaca/sharegpt/openai；三者都可读 messages（openai）格式，因此可将其作为统一交换格式。</desc>
+                <rect width="880" height="300" rx="16" fill="#faf8ff"/>
+                <rect x="270" y="30" width="340" height="62" rx="14" fill="#7c3aed"/><text x="440" y="58" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">统一交换格式</text><text x="440" y="80" text-anchor="middle" font-size="12" fill="#ede9fe">messages（OpenAI 兼容）</text>
+                <g stroke="#8b5cf6" stroke-width="3" marker-end="url(#a24)">
+                    <line x1="100" y1="170" x2="380" y2="96"/><line x1="440" y1="170" x2="440" y2="96"/><line x1="780" y1="170" x2="500" y2="96"/>
+                </g>
+                <defs><marker id="a24" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8b5cf6"/></marker></defs>
+                <g font-size="12" text-anchor="middle">
+                    <rect x="40" y="180" width="230" height="94" rx="12" fill="#e0f2fe"/><text x="155" y="206" font-weight="700" fill="#075985">TRL</text><text x="155" y="230" font-size="11" fill="#075985">首选 messages</text><text x="155" y="252" font-size="11" fill="#075985">DPO: chosen/rejected</text>
+                    <rect x="325" y="180" width="230" height="94" rx="12" fill="#d6f1eb"/><text x="440" y="206" font-weight="700" fill="#0f6f66">Axolotl</text><text x="440" y="230" font-size="11" fill="#0f6f66">sharegpt / alpaca</text><text x="440" y="252" font-size="11" fill="#0f6f66">YAML 配置驱动</text>
+                    <rect x="610" y="180" width="230" height="94" rx="12" fill="#ffe9d6"/><text x="725" y="206" font-weight="700" fill="#9a4b16">LLaMA-Factory</text><text x="725" y="230" font-size="11" fill="#9a4b16">alpaca / sharegpt / openai</text><text x="725" y="252" font-size="11" fill="#9a4b16">中文支持最优</text>
+                </g>
+            </svg>
+            <figcaption>把 messages（OpenAI 兼容）当作“交换格式”，只需写一次转换逻辑，就能被三大框架读取。这也是 2025 年以后各框架“格式收敛”的方向。</figcaption>
+        </figure>
 
         <p>理解这三个框架的数据适配方式，基本上就能覆盖后训练数据格式转换的90%场景。我们逐个来看。</p>
 
@@ -445,6 +479,16 @@ if __name__ == "__main__":
         <p>到现在为止，我们已经掌握了：三大主流训练框架的数据格式要求、如何使用datasets.map实现格式转换、以及常见的适配问题和解决方法。框架适配是后训练数据工程中的"最后一公里"，走好这一步，你的数据才能真正发挥价值。</p>
 
         <p>但还有一个非常重要的问题我们还没讨论——<strong>这些数据从法律角度来说安全吗？它们的使用许可是否允许商业用途？第25章：许可证合规与商用风险，我们来解剖后训练数据中的法律边界。</strong></p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>TRL：HuggingFace 的 SFT/DPO/GRPO 训练库 — <a href="https://huggingface.co/docs/trl/">huggingface.co/docs/trl</a></li>
+            <li>Axolotl 微调框架文档 — <a href="https://docs.axolotl.ai/">docs.axolotl.ai</a></li>
+            <li>LLaMA-Factory：统一高效微调框架 — <a href="https://arxiv.org/abs/2403.13372">arXiv:2403.13372</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>各框架“GitHub Stars（2026.06）”与所支持的算法清单会随版本变化，应以各项目官方仓库与文档为准；各框架“首选数据格式”为教学归纳，具体字段名和配置以官方文档为准。本章“chat_template 颠倒”排查案例为课程内引述，不附可核验实验编号。
+        </div>
 
         <div class="footer-nav">
             <a href="23.html">← 上一章</a>

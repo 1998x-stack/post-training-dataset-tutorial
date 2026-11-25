@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第22章 Agent多步推理数据</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第22章 Agent多步推理数据</h2>
+        <h1>第22章 Agent多步推理数据</h1>
 
         <p>大家好，我是你们的讲师。上一章我们学习了函数调用数据——让模型学会"在正确的时机调用正确的工具"。但如果把工具调用看作"说一句话"，那么 Agent 多步推理就是"写一篇论文"——它要求模型在多轮交互中，根据环境的反馈动态调整自己的行动策略，最终完成一个复杂的任务。</p>
 
@@ -67,6 +82,33 @@
 ]</code></pre>
 
         <p>在这个序列中，每一个 action 都会改变环境（environment），而环境的变化又会影响下一步的 observation。Agent 的训练数据不是"一个问题对应一个答案"——它是"一个初始状态对应一条完整的行动轨迹"。这就好比训练一名棋手：你不能只给他看"这个棋局该怎么走"——你要让他真正去下棋，经历输赢，从胜负中学习。</p>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig22-title fig22-desc" viewBox="0 0 880 290" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig22-title">普通 SFT 单步对与 Agent 环境交互剧集的对比</title>
+                <desc id="fig22-desc">上方为静态单步的 instruction-response 对；下方为 Agent 的一条 episode，由多组观察-动作-奖励构成，中间步骤奖励为 0，最后一步才获得奖励。</desc>
+                <rect width="880" height="290" rx="16" fill="#faf8ff"/>
+                <text x="30" y="34" font-size="13" font-weight="700" fill="#3b1d78">普通 SFT：静态单步对</text>
+                <rect x="60" y="46" width="200" height="52" rx="10" fill="#e8e2ff"/><text x="160" y="77" text-anchor="middle" font-size="12.5" fill="#3b1d78">instruction</text>
+                <rect x="320" y="46" width="200" height="52" rx="10" fill="#d6f1eb"/><text x="420" y="77" text-anchor="middle" font-size="12.5" fill="#0f6f66">response</text>
+                <line x1="260" y1="72" x2="318" y2="72" stroke="#8b5cf6" stroke-width="3" marker-end="url(#a22)"/>
+                <text x="560" y="77" font-size="12" fill="#53676d">一次性、无反馈</text>
+                <text x="30" y="140" font-size="13" font-weight="700" fill="#9a4b16">Agent：环境交互剧集（episode）</text>
+                <g font-size="11.5" text-anchor="middle">
+                    <rect x="60" y="156" width="160" height="66" rx="10" fill="#e0f2fe"/><text x="140" y="182" fill="#075985">obs₁ → act₁</text><text x="140" y="203" fill="#9b1c1c">r = 0</text>
+                    <rect x="250" y="156" width="160" height="66" rx="10" fill="#e0f2fe"/><text x="330" y="182" fill="#075985">obs₂ → act₂</text><text x="330" y="203" fill="#9b1c1c">r = 0</text>
+                    <rect x="440" y="156" width="160" height="66" rx="10" fill="#e0f2fe"/><text x="520" y="182" fill="#075985">obs₃ → act₃</text><text x="520" y="203" fill="#9b1c1c">r = 0</text>
+                    <rect x="630" y="156" width="190" height="66" rx="10" fill="#14a08c"/><text x="725" y="182" fill="#fff">obs₄ → act₄</text><text x="725" y="203" fill="#fff">r = 1 完成</text>
+                </g>
+                <g stroke="#8b5cf6" stroke-width="3">
+                    <line x1="220" y1="189" x2="248" y2="189"/><line x1="410" y1="189" x2="438" y2="189"/><line x1="600" y1="189" x2="628" y2="189"/>
+                </g>
+                <text x="60" y="252" font-size="12" fill="#9b1c1c">稀疏奖励：中间步骤 r=0，只有到达里程碑或完成才拿到正奖励——</text>
+                <text x="60" y="274" font-size="12" fill="#9b1c1c">每一步动作都会改变环境，下一步观察依赖上一步动作。</text>
+                <defs><marker id="a22" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8b5cf6"/></marker></defs>
+            </svg>
+            <figcaption>SFT 数据是“点”，Agent 数据是“线”：一条 episode 由多组观察-动作-奖励组成，训练信号稀疏且状态随动作变化。这正是 Agent 数据需要环境模拟器与轨迹采样的根本原因。</figcaption>
+        </figure>
 
         <p>这个区别意味着 Agent 数据的构建方式完全不同的：</p>
 
@@ -286,6 +328,16 @@ Agent 任务：阅读 Issue 描述，理解 bug 原因，修改代码使其通�
         <p>完成了第 19-22 章的学习，你已经掌握了"后训练数据"体系中最为复杂和前沿的部分——从 CoT 推理数据到 GRPO 强化学习，从工具调用到 Agent 多步交互。这些能力让模型从一个"被动回答的问答系统"进化成了一个"主动思考、运用工具、多步推理的智能体"。</p>
 
         <p>然而，高质量数据的构建远不止"设计"和"生成"这么简单。你还需要一整套工程化的框架来确保数据的可靠性、可复现性、和可追溯性。下一章，我们将进入第四部分的内容——<strong>数据质量管线搭建。</strong></p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>SWE-bench：真实 GitHub Issue 与代码修复的评测基准 — <a href="https://arxiv.org/abs/2310.06770">arXiv:2310.06770</a></li>
+            <li>ReAct：推理与行动交错的 Agent 范式 — <a href="https://arxiv.org/abs/2210.03629">arXiv:2210.03629</a></li>
+            <li>ToolLLM / ToolBench（工具 Agent 数据）— <a href="https://arxiv.org/abs/2307.16789">arXiv:2307.16789</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>SWE-bench“2,000+ Issue / 12 个仓库”来自原论文；“2024 年初约 15% → 2025-2026 年 60%+”为量级描述，具体解法率随评测设置与模型版本差异很大，应以 SWE-bench 官方榜单为准。“多脚手架”与奖励维度设计为教学整理。
+        </div>
 
         <div class="footer-nav">
             <a href="21.html">← 上一章</a>

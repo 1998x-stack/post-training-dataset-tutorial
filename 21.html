@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第21章 工具调用与Function Call数据</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,16 +56,16 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第21章 工具调用与Function Call数据</h2>
+        <h1>第21章 工具调用与Function Call数据</h1>
 
         <p>大家好，我是你们的讲师。在前两章，我们专注于让模型变得"更聪明"——通过 CoT 数据学会逐步推理，通过 GRPO 强化学习学会自我纠错。但一个只会"思考"不会"行动"的模型，就像一个满腹经纶却足不出户的学者——知识渊博，但无法改变世界。</p>
 
         <p>这一章要讨论的，正是模型的"行动力"——<strong>工具调用（Tool Use）和函数调用（Function Calling）</strong>。这不仅仅是模型能力的延伸，更是 AI 从"对话系统"进化到"Agent 系统"的关键一步。</p>
 
-        <h2>让模型学会「使用工具」——从纯文本到行动能力的跨越</h2>
+        <h2>让模型学会使用工具：从纯文本到行动能力的跨越</h2>
 
         <p>什么是工具调用数据？简单来说，就是教会模型在适当的时机调用外部工具（API、数据库、计算器、搜索引擎等）来完成任务。与传统 SFT 数据"instruction → response"的两段式结构不同，工具调用数据是一个<strong>多轮交互过程</strong>：</p>
 
@@ -60,6 +75,29 @@
 模型：北京今天天气晴朗，气温 28°C，湿度 45%，非常适合户外活动。</code></pre>
 
         <p>看到区别了吗？模型不再是一次性给出最终回答，而是在"思考"之后决定"调用什么工具、传入什么参数"，然后根据工具的返回结果来组织最终的回答。这种"思考-行动-观察"的循环，正是 Agent 系统的核心模式。</p>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig21-title fig21-desc" viewBox="0 0 880 250" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig21-title">工具调用的“思考-调用-观察”循环</title>
+                <desc id="fig21-desc">用户请求触发 assistant 产生 tool_call，工具返回 tool_result，assistant 再解读结果给出回答；需要更多工具时循环多次。</desc>
+                <rect width="880" height="250" rx="16" fill="#faf8ff"/>
+                <g font-size="12.5" font-weight="700" text-anchor="middle">
+                    <rect x="30" y="60" width="180" height="68" rx="12" fill="#e0f2fe"/><text x="120" y="90" fill="#075985">用户请求</text><text x="120" y="110" font-size="10.5" font-weight="400" fill="#075985">自然语言问题</text>
+                    <rect x="250" y="60" width="180" height="68" rx="12" fill="#e8e2ff"/><text x="340" y="90" fill="#3b1d78">assistant</text><text x="340" y="110" font-size="10.5" font-weight="400" fill="#5b21b6">生成 tool_calls</text>
+                    <rect x="470" y="60" width="180" height="68" rx="12" fill="#ffe9d6"/><text x="560" y="90" fill="#9a4b16">role: tool</text><text x="560" y="110" font-size="10.5" font-weight="400" fill="#9a4b16">返回 tool_result</text>
+                    <rect x="690" y="60" width="160" height="68" rx="12" fill="#d6f1eb"/><text x="770" y="90" fill="#0f6f66">assistant</text><text x="770" y="110" font-size="10.5" font-weight="400" fill="#0f6f66">解读并回答</text>
+                </g>
+                <g stroke="#8b5cf6" stroke-width="3" marker-end="url(#a21)">
+                    <line x1="210" y1="94" x2="248" y2="94"/><line x1="430" y1="94" x2="468" y2="94"/><line x1="650" y1="94" x2="688" y2="94"/>
+                </g>
+                <defs><marker id="a21" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8b5cf6"/></marker></defs>
+                <path d="M340 128 V180 H770 V132" fill="none" stroke="#ea8a2f" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#a21b)"/>
+                <defs><marker id="a21b" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ea8a2f"/></marker></defs>
+                <text x="555" y="200" text-anchor="middle" font-size="12" fill="#9a4b16">需要多个工具时循环：多步 / 嵌套 / 并行调用</text>
+                <text x="30" y="236" font-size="11.5" fill="#9a4b16">* 消息字段名按 OpenAI tool calling 规范整理。</text>
+            </svg>
+            <figcaption>工具调用不是一次性问答，而是“思考→调用→观察→再思考”的循环。训练数据必须覆盖单次、串行、嵌套、并行乃至错误恢复等不同形态。</figcaption>
+        </figure>
 
         <p>训练模型学会工具调用，从数据角度看，需要解决三个核心问题：</p>
         <ul>
@@ -247,6 +285,17 @@
         <p>工具调用数据是连接"语言模型"和"Agent 系统"的关键桥梁。通过这一章，你了解了函数调用数据的核心结构（function definition → tool_call → tool_response 三要素循环），掌握了 Glaive v2 和 ToolBench 这两个标杆数据集的特点和适用场景，也学会了函数调用数据的质量要求以及一个经典的"参数幻觉"踩坑教训。</p>
 
         <p>但工具调用只是 Agent 能力的起点。当模型学会调用单个工具后，下一步是让它学会在多个步骤中综合运用工具、处理中间结果、并根据反馈动态调整行动策略——这就是真正意义上的 Agent 能力。下一章，我们将深入探讨 <strong>Agent 多步推理数据——SWE-bench、环境交互轨迹、以及 Agent 数据与普通 SFT 数据的根本区别。</strong></p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>ToolLLM / ToolBench：面向真实 API 的工具学习 — <a href="https://arxiv.org/abs/2307.16789">arXiv:2307.16789</a></li>
+            <li>API-Bank：工具增强 LLM 的评测基准 — <a href="https://arxiv.org/abs/2304.08244">arXiv:2304.08244</a></li>
+            <li>ToolAlpaca：自动生成工具使用数据 — <a href="https://arxiv.org/abs/2306.05301">arXiv:2306.05301</a></li>
+            <li>Glaive Function Calling v2 数据集 — <a href="https://huggingface.co/datasets/glaiveai/glaive-function-calling-v2">glaiveai/glaive-function-calling-v2</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>Glaive Function Calling v2“约 10 万条”、ToolBench“16,000+ API / 数十万条”、BFCL“评测集 ~2K”、API-Bank“~2K”、ToolAlpaca“~3.9K”均以各数据集卡片与论文为准，会随版本变化。本章“参数幻觉”踩坑故事为课程内引述，不附可核验实验编号。
+        </div>
 
         <div class="footer-nav">
             <a href="20.html">← 上一章</a>
