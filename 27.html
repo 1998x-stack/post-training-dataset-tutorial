@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第27章 数据策略设计与评估体系</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html" class="active">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第27章 数据策略设计与评估体系</h2>
+        <h1>第27章 数据策略设计与评估体系</h1>
 
         <p>大家好，我是你们的讲师。通过前26章的学习，我们已经走过了从基础概念到前沿趋势的完整知识旅程。你知道了所有主流的后训练数据集，掌握了数据管线的搭建方法，也了解了2025-2026年的最新范式演进。</p>
 
@@ -226,6 +241,25 @@
 
         <p>有了数据策略之后，你面临的下一个问题是——<strong>怎么知道这个策略是有效的？</strong></p>
 
+        <figure>
+            <svg role="img" aria-labelledby="fig27-title fig27-desc" viewBox="0 0 880 290" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig27-title">评估体系的三层金字塔</title>
+                <desc id="fig27-desc">塔尖为红队测试（周级、成本高、覆盖安全与对抗鲁棒），中间为人工评估（天级、覆盖创造力语气安全），塔基为自动化评估（分钟级、覆盖指令遵循知识与推理）。</desc>
+                <rect width="880" height="290" rx="16" fill="#faf8ff"/>
+                <text x="30" y="34" font-size="13" font-weight="700" fill="#3b1d78">评估体系：越往上越贵、越慢、越主观</text>
+                <polygon points="380,50 500,50 545,116 335,116" fill="#ef4444"/><text x="440" y="90" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">① 红队测试</text>
+                <polygon points="325,126 555,126 610,200 270,200" fill="#ea8a2f"/><text x="440" y="169" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">② 人工评估</text>
+                <polygon points="260,210 620,210 690,280 190,280" fill="#14a08c"/><text x="440" y="251" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">③ 自动化评估</text>
+                <g font-size="11.5" fill="#334155">
+                    <text x="700" y="86">周级・高成本</text><text x="700" y="104">安全边界・对抗鲁棒</text>
+                    <text x="660" y="162">天级・中成本</text><text x="660" y="180">创造力・语气・安全</text>
+                    <text x="715" y="244">分钟级・低成本</text><text x="715" y="262">指令遵循・知识・推理</text>
+                </g>
+                <text x="30" y="286" font-size="11.5" fill="#9a4b16">* 成本/速度分层为教学示意，具体工具以官方文档为准。</text>
+            </svg>
+            <figcaption>三层评估金字塔：自动化评估做日常快速迭代，人工评估补足主观维度，红队测试在上线前守最后一道门。资源有限时，优先把塔基搭稳。</figcaption>
+        </figure>
+
         <p>一个完善的后训练数据评估体系应该分为三个层级：</p>
 
         <h3>第一层：自动化评估</h3>
@@ -330,6 +364,16 @@
         </div>
 
         <p>至此，我们已经建立了从场景诊断到数据集组合，从评估体系到迭代优化的完整策略框架。现在你手上已经有了所有必要的知识和工具——唯一缺少的就是真正的动手实践。下一章，也是本课程的最后一章，我们将把全部28章的知识串起来，完成一个从零到一的综合实战项目：<strong>构建一条完整的后训练数据流水线。</strong>让我们一起进入第28章：综合实战——从零构建后训练数据流水线。</p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena — <a href="https://arxiv.org/abs/2306.05685">arXiv:2306.05685</a></li>
+            <li>Training Verifiers to Solve Math Word Problems（GSM8K）— <a href="https://arxiv.org/abs/2110.14168">arXiv:2110.14168</a></li>
+            <li>AlpacaEval 自动评测 — <a href="https://tatsu-lab.github.io/alpaca_eval/">tatsu-lab.github.io/alpaca_eval</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>本章“四大典型场景”的数据集组合与百分比、总量区间为<strong>教学示意</strong>，融合了公开技术报告的常见做法，但<strong>不是实测最优配比</strong>，应以自己项目的消融实验为准。“能力维度星级表”同样为教学整理。 AlpacaEval / MT-Bench / Arena-Hard 请以各自官方页面为准。
+        </div>
 
         <div class="footer-nav">
             <a href="26.html">← 上一章</a>

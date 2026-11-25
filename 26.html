@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第26章 2025-2026后训练数据新范式</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第26章 2025-2026后训练数据新范式</h2>
+        <h1>第26章 2025-2026后训练数据新范式</h1>
 
         <p>大家好，我是你们的讲师。走到第26章，我们已经系统性地学习了后训练数据的方方面面——从分类体系到标杆数据集，从偏好对齐到Agent数据，从管线搭建到合规审查。可以说，前25章建立的是"在这个领域我想做什么都可以做到"的工程能力。</p>
 
@@ -93,6 +108,33 @@
                 <td>PiKa, SPIN, DeepSeek-R1, Qwen3</td>
             </tr>
         </table>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig26-title fig26-desc" viewBox="0 0 880 280" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig26-title">从静态数据集到自我进化数据循环</title>
+                <desc id="fig26-desc">旧范式是采集-标注-训练的直线流程；新范式是评测、生成、训练、验证四步构成的闭环，模型在循环中不断产生新的训练数据。</desc>
+                <rect width="880" height="280" rx="16" fill="#faf8ff"/>
+                <text x="30" y="32" font-size="13" font-weight="700" fill="#53676d">旧范式：静态数据（一次性）</text>
+                <rect x="60" y="44" width="180" height="46" rx="10" fill="#e5e7eb"/><text x="150" y="73" text-anchor="middle" font-size="12" fill="#6b7280">采集 + 标注</text>
+                <rect x="300" y="44" width="180" height="46" rx="10" fill="#e5e7eb"/><text x="390" y="73" text-anchor="middle" font-size="12" fill="#6b7280">一次性 SFT</text>
+                <rect x="540" y="44" width="180" height="46" rx="10" fill="#e5e7eb"/><text x="630" y="73" text-anchor="middle" font-size="12" fill="#6b7280">部署（不再回流）</text>
+                <line x1="240" y1="67" x2="298" y2="67" stroke="#9ca3af" stroke-width="2.5" marker-end="url(#a26g)"/><line x1="480" y1="67" x2="538" y2="67" stroke="#9ca3af" stroke-width="2.5" marker-end="url(#a26g)"/>
+                <defs><marker id="a26g" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9ca3af"/></marker><marker id="a26p" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#7c3aed"/></marker></defs>
+                <text x="30" y="148" font-size="13" font-weight="700" fill="#3b1d78">新范式：自我进化数据循环</text>
+                <g font-size="12" font-weight="600" text-anchor="middle">
+                    <rect x="60" y="166" width="180" height="58" rx="10" fill="#e8e2ff"/><text x="150" y="192" fill="#3b1d78">① 评测识别短板</text><text x="150" y="211" font-size="10.5" font-weight="400" fill="#5b21b6">自动评估体系</text>
+                    <rect x="270" y="166" width="180" height="58" rx="10" fill="#d6f1eb"/><text x="360" y="192" fill="#0f6f66">② 定向生成数据</text><text x="360" y="211" font-size="10.5" font-weight="400" fill="#0f6f66">合成 / 自博弈</text>
+                    <rect x="480" y="166" width="180" height="58" rx="10" fill="#ffe9d6"/><text x="570" y="192" fill="#9a4b16">③ 增量训练 / RL</text><text x="570" y="211" font-size="10.5" font-weight="400" fill="#9a4b16">SFT + GRPO</text>
+                    <rect x="690" y="166" width="150" height="58" rx="10" fill="#e0f2fe"/><text x="765" y="192" fill="#075985">④ 验证与筛选</text><text x="765" y="211" font-size="10.5" font-weight="400" fill="#075985">拒绝采样</text>
+                </g>
+                <g stroke="#7c3aed" stroke-width="3" marker-end="url(#a26p)">
+                    <line x1="240" y1="195" x2="268" y2="195"/><line x1="450" y1="195" x2="478" y2="195"/><line x1="660" y1="195" x2="688" y2="195"/>
+                </g>
+                <path d="M765 224 V252 H150 V226" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#a26p)"/>
+                <text x="455" y="270" text-anchor="middle" font-size="11.5" fill="#5b21b6">数据回流，进入下一轮循环</text>
+            </svg>
+            <figcaption>两个时代的分水岭：旧范式的数据在训练前就“冻结”，新范式把评测、生成、训练、验证连成闭环。PiKa、SPIN、自动课程与数据飞轮，都是这个循环在不同环节上的强化。</figcaption>
+        </figure>
 
         <p>这张表清晰地展示了两个时代的鸿沟。接下来的几个小节，我们将逐一深入这四个关键新范式：<strong>PiKa 的小数据奇迹、SPIN 自我博弈、自动课程生成、以及数据飞轮实战</strong>。</p>
 
@@ -243,6 +285,16 @@
         </div>
 
         <p>了解了前沿趋势之后，一个很自然的问题是：<strong>面对这么多选择，我到底该怎么为自己的模型设计数据策略？</strong>不同的应用场景需要完全不同的数据组合和配比。下一章，我们将围绕这个问题展开——从场景诊断到数据集组合，从评估体系到迭代优化，建立一套完整的数据策略设计框架。让我们一起进入第27章：数据策略设计与评估体系。</p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>SPIN: Self-Play Fine-Tuning（自我博弈）— <a href="https://arxiv.org/abs/2401.01335">arXiv:2401.01335</a></li>
+            <li>DeepSeek-R1（冷启动 SFT + RL + 拒绝采样循环）— <a href="https://arxiv.org/abs/2501.12948">arXiv:2501.12948</a></li>
+            <li>ReST：Reinforced Self-Training（奖励引导的自我训练）— <a href="https://arxiv.org/abs/2308.08998">arXiv:2308.08998</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>“PiKa 3 万条 / AlpacaEval 2.0 42.8% / Llama-3-8B-Instruct 34.2%”为课程内引述，未附可核验的原始论文链接，应以官方发布为准；“保留率不到 0.5%”“GLM-5 四路数据”等为课程内描述，不应当作实测证据。SPIN/ReST/DeepSeek-R1 请参见对应原论文。
+        </div>
 
         <div class="footer-nav">
             <a href="25.html">← 上一章</a>

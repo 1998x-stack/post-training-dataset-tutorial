@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第25章 许可证合规与商用风险</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第25章 许可证合规与商用风险</h2>
+        <h1>第25章 许可证合规与商用风险</h1>
 
         <p>大家好，我是你们的讲师。这一章我们要聊一个在后训练数据工程中经常被忽略、但一旦出问题就极其致命的话题——<strong>数据的法律合规性</strong>。</p>
 
@@ -67,6 +82,28 @@
         </div>
 
         <h2>常见开源许可证速查</h2>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig25-title fig25-desc" viewBox="0 0 880 250" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig25-title">许可证的商用宽松度光谱</title>
+                <desc id="fig25-desc">从左到右依次为可自由商用（MIT/Apache-2.0/CC0）、需署名（CC-BY）、有传染性（CC-BY-SA）、禁止商用（CC-BY-NC），限制逐步收紧。</desc>
+                <rect width="880" height="250" rx="16" fill="#faf8ff"/>
+                <text x="30" y="34" font-size="13" font-weight="700" fill="#3b1d78">商用宽松度：从左到右逐步收紧</text>
+                <rect x="60" y="60" width="300" height="54" fill="#14a08c"/><text x="210" y="93" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">可自由商用</text>
+                <rect x="360" y="60" width="160" height="54" fill="#0ea5e9"/><text x="440" y="93" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">需署名</text>
+                <rect x="520" y="60" width="120" height="54" fill="#ea8a2f"/><text x="580" y="93" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">有传染性</text>
+                <rect x="640" y="60" width="180" height="54" fill="#ef4444"/><text x="730" y="93" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">禁止商用</text>
+                <g font-size="11" fill="#334155" text-anchor="middle">
+                    <text x="210" y="136" font-weight="700">MIT / Apache-2.0 / CC0</text><text x="210" y="154">OpenHermes、Firefly、Dolly</text>
+                    <text x="440" y="136" font-weight="700">CC-BY 4.0</text><text x="440" y="154">OpenAssistant</text>
+                    <text x="580" y="136" font-weight="700">CC-BY-SA</text><text x="580" y="154">部分 Wiki 衍生</text>
+                    <text x="730" y="136" font-weight="700">CC-BY-NC</text><text x="730" y="154">HH-RLHF、BELLE 部分版本</text>
+                </g>
+                <text x="60" y="196" font-size="12" fill="#9b1c1c">商用红线：只要含 NC 或原始 ToS 禁止竞品训练，就不能用于商业产品。</text>
+                <text x="60" y="218" font-size="11.5" fill="#9a4b16">* 具体条款以各许可证/数据集卡片最新版为准；本图为教学整理。</text>
+            </svg>
+            <figcaption>把许可证看成一条从宽松到严格的轴：越向右限制越多。商用项目应尽量使用左侧两类，必须避开 NC；CC-BY-SA 的“传染性”在 AI 领域仍存争议，需与法务确认。</figcaption>
+        </figure>
 
         <p>后训练数据领域最常见的许可证有以下几个。理解它们的核心差别，是判断数据能否商用的基础：</p>
 
@@ -317,6 +354,16 @@ Meta Llama 3 EULA：
         <p>到这里为止，第四部分"工程体系与合规"的三章内容已经全部结束。我们搭建了数据质量管线（第23章），完成了训练框架的数据格式适配（第24章），又走通了许可证合规检查（第25章）。你现在已经具备了构建一套完整的、可投入生产环境的后训练数据工程体系的能力。</p>
 
         <p>接下来，我们将进入整个课程最激动人心的部分——<strong>第26章：2025-2026后训练数据新范式，一起看看在这个领域正在发生的革命性变化，从合成数据2.0到数据飞轮到端到端数据训练。</strong></p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>The Data Provenance Initiative：AI 训练数据集许可与溯源研究 — <a href="https://arxiv.org/abs/2310.16787">arXiv:2310.16787</a></li>
+            <li>Creative Commons 许可说明 — <a href="https://creativecommons.org/share-your-work/cclicenses/">creativecommons.org</a></li>
+            <li>OpenAI 服务条款 — <a href="https://openai.com/policies/terms-of-use/">openai.com/policies/terms-of-use</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于效力与口径：</strong>各许可证名称、字段含义（商用/署名/改版共享）以 Creative Commons 官方说明为准；服务条款引用的“节号与版本”仅为例示，实际条款以各公司官网最新版为准。本章所有合规结论仅作一般性说明，<strong>不构成法律意见</strong>；具体案件需咨询专业律师。
+        </div>
 
         <div class="footer-nav">
             <a href="24.html">← 上一章</a>
