@@ -5,11 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第7章 HuggingFace数据生态入门</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +55,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第7章 HuggingFace数据生态入门</h2>
+        <h1>第7章 HuggingFace数据生态入门</h1>
 
         <p>大家好，我是你们的讲师。从这一章开始，我们正式进入实务环节——不再只是讨论"数据应该是什么样"，而是亲手操作真实的数据集。</p>
 
@@ -63,6 +77,30 @@
         </ul>
 
         <p>对于后训练数据工程师来说，最核心的能力是：快速找到你需要的数据集，用一行代码加载它，然后检查和预处理。</p>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig7-title fig7-desc" viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig7-title">HuggingFace 数据集的发现、判断与加载工作流</title>
+                <desc id="fig7-desc">从 Hub 发现数据集、读 Dataset Card 判断可用性，到选择 Streaming 或全量加载，再经 map/filter 清洗与 train_test_split 划分的完整流程。</desc>
+                <rect width="880" height="300" rx="16" fill="#faf8ff"/>
+                <g font-size="13" font-weight="600" text-anchor="middle">
+                    <rect x="25" y="120" width="150" height="54" rx="12" fill="#e8e2ff"/><text x="100" y="152" fill="#3b1d78">① Hub 发现</text>
+                    <rect x="205" y="120" width="150" height="54" rx="12" fill="#d6f1eb"/><text x="280" y="143" fill="#0f6f66">② 读 Dataset</text><text x="280" y="163" fill="#0f6f66">Card 判断</text>
+                    <rect x="385" y="120" width="150" height="54" rx="12" fill="#ffe9d6"/><text x="460" y="143" fill="#9a4b16">③ 选择加载</text><text x="460" y="163" fill="#9a4b16">模式</text>
+                    <rect x="565" y="120" width="150" height="54" rx="12" fill="#e0f2fe"/><text x="640" y="152" fill="#075985">④ map / filter</text>
+                    <rect x="745" y="120" width="120" height="54" rx="12" fill="#ede9fe"/><text x="805" y="143" fill="#5b21b6">⑤ train_</text><text x="805" y="163" fill="#5b21b6">test_split</text>
+                </g>
+                <g stroke="#8b5cf6" stroke-width="3" marker-end="url(#arw)">
+                    <line x1="175" y1="147" x2="203" y2="147"/><line x1="355" y1="147" x2="383" y2="147"/><line x1="535" y1="147" x2="563" y2="147"/><line x1="715" y1="147" x2="743" y2="147"/>
+                </g>
+                <defs><marker id="arw" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8b5cf6"/></marker></defs>
+                <rect x="385" y="210" width="360" height="66" rx="12" fill="#fde2e2"/>
+                <text x="400" y="234" font-size="12.5" fill="#9b1c1c">③ 分支：数据超出内存 → streaming=True（恒定内存）</text>
+                <text x="400" y="258" font-size="12.5" fill="#9b1c1c">能装进内存 → 全量加载＋num_proc 多进程 map</text>
+                <path d="M460 174 V208" stroke="#8b5cf6" stroke-width="3" marker-end="url(#arw)"/>
+            </svg>
+            <figcaption>数据集使用的五步工作流：先“发现”再“判断”，然后根据规模选择加载模式。第③步的分支是本节的实用决策点——大而用不完的数据集用 Streaming，能装下且要反复迭代的才全量加载。</figcaption>
+        </figure>
 
         <h2>7.2 datasets 库核心 API</h2>
 
@@ -233,6 +271,16 @@ print(f"第一轮 user: {ultrachat_sample['messages'][0]['content'][:100]}...")<
         <p>掌握了 HuggingFace 生态的核心操作，你就可以开始系统性地探索和利用海量的开源数据集了。从下一章开始，我们将逐一深入各个类别中最重要、最经典的标杆数据集，并学习如何判断它们是否适合你的项目需求。</p>
 
         <p><strong>下一站：通用英文 SFT 标杆数据集——让我们进入第 8 章。</strong></p>
+
+        <h2>7.6 本章引用与出处</h2>
+        <ul>
+            <li>HuggingFace datasets 库官方文档（load_dataset / map / filter / streaming）— <a href="https://huggingface.co/docs/datasets/">huggingface.co/docs/datasets</a></li>
+            <li>FLAN（指令微调数据集）— <a href="https://arxiv.org/abs/2109.01652">arXiv:2109.01652</a></li>
+            <li>UltraChat（大规模多轮对话数据）— <a href="https://arxiv.org/abs/2305.14233">arXiv:2305.14233</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>Alpaca 的 52,002 条与代码注释中的输出结果，对应 tatsu-lab/alpaca 数据集的真实规模；FLAN_2022 与 UltraChat 的具体条数会随镜像与拆分版本变化，本章只演示字段结构，不将其条数当作固定事实。
+        </div>
 
         <div class="footer-nav">
             <a href="06.html">← 上一章</a>

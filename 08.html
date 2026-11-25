@@ -5,11 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第8章 通用英文SFT标杆数据集</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +55,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第8章 通用英文SFT标杆数据集</h2>
+        <h1>第8章 通用英文SFT标杆数据集</h1>
 
         <p>还记得第7章我们提到 HuggingFace 上的数据集浩如烟海吗？光是搜索 "SFT" 关键词就能找到上千个数据集。但真正经过业界反复验证、可以作为项目基石的标杆数据集，其实就那么几个。这一章，我们就来认识英文 SFT 领域的三座里程碑——<strong>FLAN Collection、OpenHermes 2.5 和 Alpaca</strong>。这三个数据集分别代表了三种不同的数据哲学：系统化任务覆盖、生产级高质量和快速原型验证。</p>
 
@@ -61,6 +75,29 @@
         </ul>
 
         <p>业界选型时的一般经验是：<strong>新项目先用 Alpaca 复现 baseline，再用 OpenHermes 2.5 作为主力 SFT 数据集，最后根据需要从 FLAN Collection 中精选特定任务模板进行补充。</strong></p>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig8-title fig8-desc" viewBox="0 0 880 330" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig8-title">英文 SFT 三大标杆数据集的定位坐标</title>
+                <desc id="fig8-desc">横轴为可直接使用的数据规模，纵轴为质量与生产就绪度。FLAN Collection 处在规模最大、就绪度中等的位置；OpenHermes 2.5 规模中等但就绪度最高；Alpaca 规模最小、就绪度较低。</desc>
+                <rect width="880" height="330" rx="16" fill="#faf8ff"/>
+                <line x1="100" y1="280" x2="840" y2="280" stroke="#c4b5fd" stroke-width="2"/>
+                <line x1="100" y1="280" x2="100" y2="40" stroke="#c4b5fd" stroke-width="2"/>
+                <text x="470" y="308" text-anchor="middle" font-size="13" fill="#53676d">可直接使用的数据规模 →</text>
+                <text x="30" y="160" text-anchor="middle" font-size="13" fill="#53676d" transform="rotate(-90 30 160)">质量 / 生产就绪度 →</text>
+                <circle cx="730" cy="150" r="40" fill="rgba(124,58,237,0.18)" stroke="#7c3aed" stroke-width="2.5"/>
+                <text x="730" y="146" text-anchor="middle" font-size="12.5" font-weight="700" fill="#5b21b6">FLAN</text>
+                <text x="730" y="164" text-anchor="middle" font-size="11" fill="#5b21b6">广度优先</text>
+                <circle cx="540" cy="90" r="34" fill="rgba(234,138,47,0.2)" stroke="#ea8a2f" stroke-width="2.5"/>
+                <text x="540" y="86" text-anchor="middle" font-size="12" font-weight="700" fill="#9a4b16">OpenHermes</text>
+                <text x="540" y="104" text-anchor="middle" font-size="11" fill="#9a4b16">质量优先</text>
+                <circle cx="210" cy="225" r="30" fill="rgba(20,160,140,0.2)" stroke="#14a08c" stroke-width="2.5"/>
+                <text x="210" y="222" text-anchor="middle" font-size="12" font-weight="700" fill="#0f6f66">Alpaca</text>
+                <text x="210" y="240" text-anchor="middle" font-size="11" fill="#0f6f66">轻量基线</text>
+                <text x="760" y="215" font-size="11.5" fill="#9a4b16">位置为教学示意，非定量评估</text>
+            </svg>
+            <figcaption>把三个数据集放到“规模×就绪度”平面上：FLAN 赢在广度但需格式转换，OpenHermes 即用且质量高，Alpaca 小而适合做基线对照。三者不是替代关系，而是选型时互相补充的组合。</figcaption>
+        </figure>
 
         <h2>FLAN Collection（指令微调鼻祖）</h2>
 
@@ -256,6 +293,17 @@ for name, samples in [("FLAN", flan_sample), ("OpenHermes", oh_sample), ("Alpaca
         <p>理解了这些差异，你就知道为什么在实际工程中，很少直接拿某个数据集"开箱即用"——几乎总是需要根据你的训练框架和目标场景做一些格式调整和过滤。</p>
 
         <p>从下一章开始，我们将进入另一个重要的 SFT 数据维度——<strong>多轮对话数据</strong>。如果说 FLAN Collection 教模型"做事"，OpenHermes 2.5 让模型"做得更好"，那么多轮对话数据是在教模型"怎么聊天"。第 9 章，我们将深入 UltraChat、ShareGPT 等经典多轮对话数据集，看看对话数据的独特挑战和解决方案。</p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>FLAN: Finetuned Language Models are Zero-Shot Learners — <a href="https://arxiv.org/abs/2109.01652">arXiv:2109.01652</a></li>
+            <li>The FLAN Collection: Designing Data and Methods for Effective Instruction Tuning — <a href="https://arxiv.org/abs/2301.13688">arXiv:2301.13688</a></li>
+            <li>Self-Instruct（Alpaca 数据生成范式）— <a href="https://arxiv.org/abs/2212.10560">arXiv:2212.10560</a></li>
+            <li>OpenHermes-2.5 数据集 — <a href="https://huggingface.co/datasets/teknium/OpenHermes-2.5">teknium/OpenHermes-2.5</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>Alpaca 的 52K 条与 Self-Instruct 请参见原论文；FLAN Collection 论文报告的是约 1,800+ 任务、数百个数据集，本章“4,800 万条 / 62 个数据集”为课程内引述，与论文口径可能不完全一致，应以原始论文（arXiv:2301.13688）为准。许可证与规模请以 Hub 上数据集卡片的最新描述为准。
+        </div>
 
         <div class="footer-nav">
             <a href="07.html">← 上一章</a>
