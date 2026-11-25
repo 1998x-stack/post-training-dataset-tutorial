@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>第11章 中文SFT数据集体系</title>
     <link rel="stylesheet" href="theme.css">
+    <style>
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: auto; }
+        code { overflow-wrap: anywhere; }
+        svg, img { max-width: 100%; height: auto; }
+        figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
+        figure svg { width: 100%; height: auto; display: block; }
+        figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
+        .skip-link:focus { left: 0; }
+        table { width: 100%; }
+        th, td { overflow-wrap: anywhere; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+    </style>
 </head>
 <body>
+<a class="skip-link" href="#content">跳转至正文</a>
 <div class="double-border">
 <div class="container">
-    <div class="sidebar">
+    <nav class="sidebar" aria-label="课程章节">
         <h3>📊 课程目录</h3>
         <ul class="chapter-list">
             <li><a href="01.html">第1章 后训练概述与数据定位</a></li>
@@ -41,10 +56,10 @@
             <li><a href="27.html">第27章 数据策略设计与评估体系</a></li>
             <li><a href="28.html">第28章 综合实战：从零构建后训练数据流水线</a></li>
         </ul>
-    </div>
-    <div class="main-content">
+    </nav>
+    <main class="main-content" id="content">
 
-        <h2>第11章 中文SFT数据集体系</h2>
+        <h1>第11章 中文SFT数据集体系</h1>
 
         <p>前几章我们介绍了 FLAN Collection、OpenHermes 2.5、UltraChat 等经典英文数据集。但如果你的目标是训练一个<strong>中文场景下的模型</strong>——无论是服务于中国用户的产品，还是需要对中文内容有深度理解的应用——你会发现直接使用这些英文数据集远远不够。原因不仅仅是语言不同，还涉及到文化语境、中文特有的表达习惯，以及中国市场的合规要求。</p>
 
@@ -160,7 +175,33 @@
 
         <p>知道了各个数据集的特色之后，关键问题来了：<strong>如何搭配使用它们才能达到最好的效果？</strong></p>
 
-        <p>基于行业实践和公开经验，一个比较成熟的中文 SFT 混合策略如下：</p>
+        <p>基于行业实践和公开经验，一个比较成熟的中文 SFT 混合策略如下（下表与下图同步，比例为教学示意）：</p>
+
+        <figure>
+            <svg role="img" aria-labelledby="fig11-title fig11-desc" viewBox="0 0 880 230" xmlns="http://www.w3.org/2000/svg">
+                <title id="fig11-title">中文 SFT 数据混合配比示意</title>
+                <desc id="fig11-desc">一条代表 100% 数据量的堆积条，按比例分为 Firefly、UltraChat-zh、BELLE 精选、英文 SFT、Alpaca-GPT4-zh 与领域数据六段。</desc>
+                <rect width="880" height="230" rx="16" fill="#faf8ff"/>
+                <text x="60" y="44" font-size="13" font-weight="700" fill="#3b1d78">中文 SFT 混合配比（合计 100%）</text>
+                <rect x="60" y="64" width="342" height="54" fill="#7c3aed"/><text x="231" y="97" text-anchor="middle" font-size="12.5" fill="#fff">Firefly 45%</text>
+                <rect x="402" y="64" width="137" height="54" fill="#14a08c"/><text x="470" y="97" text-anchor="middle" font-size="11.5" fill="#fff">UltraChat-zh 18%</text>
+                <rect x="539" y="64" width="91" height="54" fill="#ea8a2f"/><text x="584" y="97" text-anchor="middle" font-size="11" fill="#fff">BELLE 12%</text>
+                <rect x="630" y="64" width="91" height="54" fill="#0ea5e9"/><text x="675" y="97" text-anchor="middle" font-size="11" fill="#fff">英文 12%</text>
+                <rect x="721" y="64" width="38" height="54" fill="#db2777"/>
+                <rect x="759" y="64" width="61" height="54" fill="#64748b"/><text x="789" y="97" text-anchor="middle" font-size="10.5" fill="#fff">领域 8%</text>
+                <text x="756" y="140" text-anchor="middle" font-size="10.5" fill="#db2777">Alpaca-GPT4-zh 5%</text>
+                <g font-size="11.5" fill="#334155">
+                    <rect x="60" y="170" width="14" height="14" fill="#7c3aed"/><text x="80" y="181">Firefly</text>
+                    <rect x="170" y="170" width="14" height="14" fill="#14a08c"/><text x="190" y="181">UltraChat-zh</text>
+                    <rect x="300" y="170" width="14" height="14" fill="#ea8a2f"/><text x="320" y="181">BELLE 精选</text>
+                    <rect x="420" y="170" width="14" height="14" fill="#0ea5e9"/><text x="440" y="181">英文 SFT</text>
+                    <rect x="530" y="170" width="14" height="14" fill="#db2777"/><text x="550" y="181">Alpaca-GPT4-zh</text>
+                    <rect x="680" y="170" width="14" height="14" fill="#64748b"/><text x="700" y="181">领域数据</text>
+                </g>
+                <text x="60" y="214" font-size="11.5" fill="#9a4b16">* 比例为教学示意，非实测最优值；请以项目实际消融实验为准。</text>
+            </svg>
+            <figcaption>一个可用的中文 SFT 配比起点：Firefly 做骨架，UltraChat-zh 注入对话自然度，BELLE 补充指令多样性，留出英文数据防止能力退化。比例应随项目实际效果动态调整。</figcaption>
+        </figure>
 
         <table>
             <tr>
@@ -233,6 +274,17 @@ print(f"BELLE: {len(mixed_data)*0.15:.0f}")</code></pre>
         <p>至此，我们已经覆盖了中文 SFT 数据体系的主要脉络。总结一下：Firefly 是商用友好的中文多任务首选，BELLE 提供了经典的基线参考，UltraChat-zh 补充了多轮对话的自然度，Alpaca-GPT4-zh 适用于快速验证。理解了这些数据集的特性，你就可以根据项目需要灵活搭配了。</p>
 
         <p>不过，通用能力无论中文还是英文都只是基础。在很多实际场景中，我们需要模型成为<strong>特定领域的专家</strong>——程序员需要代码助手，医生需要医学问答，分析师需要金融数据解读。下一章，我们将进入<strong>垂直领域 SFT 数据</strong>的世界，看看如何通过领域数据将通用模型变成某一领域的专家。</p>
+
+        <h2>本章引用与出处</h2>
+        <ul>
+            <li>Firefly 中文指令数据集 — <a href="https://huggingface.co/datasets/YeungNLP/firefly-train-1.1M">YeungNLP/firefly-train-1.1M</a></li>
+            <li>BELLE: Bloom-Enhanced Large Language Model Engine — <a href="https://arxiv.org/abs/2303.16199">arXiv:2303.16199</a></li>
+            <li>UltraChat（含中文版 UltraChat-zh）— <a href="https://arxiv.org/abs/2305.14233">arXiv:2305.14233</a></li>
+            <li>Alpaca-GPT4 中文版 — <a href="https://huggingface.co/datasets/shibing624/alpaca-zh">shibing624/alpaca-zh</a></li>
+        </ul>
+        <div class="tip">
+            <strong>关于数字的口径：</strong>Firefly“110 万条 / 28+ 任务”、BELLE 各版本规模、UltraChat-zh“10 万轮 / 约 70 万条消息”均来自各自数据集卡片或论文，可能会随版本更新而变化，应以平台最新描述为准。本章“混合使用策略”中的配比为<strong>教学示意，非最优实测值</strong>；代码中的采样比例与总数仅为演示。<a href="https://arxiv.org/abs/2303.16199">BELLE 论文</a>与各数据集卡片是权威来源。
+        </div>
 
         <div class="footer-nav">
             <a href="10.html">← 上一章</a>
