@@ -12,6 +12,11 @@
         figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
         figure svg { width: 100%; height: auto; display: block; }
         figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .math-equation { margin: 1rem 0; background: #faf8ff; border: 1px solid #e2d9f7; border-radius: 14px; padding: 0.8rem 1rem; }
+        .math-scroll { overflow-x: auto; }
+        .math-scroll math { font-size: 1.05rem; }
+        .math-caption { font-size: 0.82rem; color: #53676d; margin-top: 0.5rem; line-height: 1.6; }
+        a:focus-visible, button:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
         .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
         .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
         .skip-link:focus { left: 0; }
@@ -134,6 +139,19 @@
 
         <p>DPO 的 Loss 函数会同时做两件事：<strong>增加 chosen 回答的生成概率，同时降低 rejected 回答的生成概率</strong>（以参考模型为基准）。因此，chosen 和 rejected 之间的区分度至关重要——如果两者只有微小差别，DPO 的梯度信号将非常微弱。</p>
 
+        <div class="math-equation" role="group" aria-label="DPO 目标函数">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="DPO 目标函数，可横向滚动">
+                <math display="block" aria-label="L DPO 等于负的期望：对偏好三元组 x y_w y_l 采样，取 log σ( β 乘以 log( πθ(y_w|x) 除以 πref(y_w|x) ) 减去 β 乘以 log( πθ(y_l|x) 除以 πref(y_l|x) ) )">
+                    <msub><mi>L</mi><mtext>DPO</mtext></msub><mo>=</mo><mo>−</mo>
+                    <msub><mi>E</mi><mrow><mo>(</mo><mi>x</mi><mo>,</mo><msub><mi>y</mi><mi>w</mi></msub><mo>,</mo><msub><mi>y</mi><mi>l</mi></msub><mo>)</mo><mo>∼</mo><mi>D</mi></mrow></msub>
+                    <mrow><mo>[</mo><mi>log</mi><mo>σ</mo><mrow><mo>(</mo>
+                        <mi>β</mi><mi>log</mi><mfrac><mrow><msub><mi>π</mi><mi>θ</mi></msub><mo>(</mo><msub><mi>y</mi><mi>w</mi></msub><mo>∣</mo><mi>x</mi><mo>)</mo></mrow><mrow><msub><mi>π</mi><mtext>ref</mtext></msub><mo>(</mo><msub><mi>y</mi><mi>w</mi></msub><mo>∣</mo><mi>x</mi><mo>)</mo></mrow></mfrac><mo>−</mo><mi>β</mi><mi>log</mi><mfrac><mrow><msub><mi>π</mi><mi>θ</mi></msub><mo>(</mo><msub><mi>y</mi><mi>l</mi></msub><mo>∣</mo><mi>x</mi><mo>)</mo></mrow><mrow><msub><mi>π</mi><mtext>ref</mtext></msub><mo>(</mo><msub><mi>y</mi><mi>l</mi></msub><mo>∣</mo><mi>x</mi><mo>)</mo></mrow></mfrac>
+                    <mo>)</mo></mrow><mo>]</mo></mrow>
+                </math>
+            </div>
+            <p class="math-caption">公式来源：Rafailov 等，<em>Direct Preference Optimization</em>（NeurIPS 2023，式 (7)）。π<sub>θ</sub> 为待训练策略，π<sub>ref</sub> 为冻结的参考模型，β 为 KL 约束强度；对数比值之差越大，chosen 相对 rejected 的优势越明显。</p>
+        </div>
+
         <p>在 HuggingFace TRL 库中使用 DPO 训练时，数据需要以以下格式加载：</p>
 
         <pre><code>from datasets import Dataset
@@ -218,6 +236,22 @@ data = Dataset.from_list([
 }</code></pre>
 
         <p>在数据转换时，需要注意：ORPO 对 chosen 的质量要求比 DPO 更高——因为 chosen 同时承担了两个角色（SFT 目标 + 偏好正例），如果 chosen 的质量不够好，SFT 部分会把模型往错误方向拉。推荐的策略是：只保留那些 chosen 回答质量确实很高（比如专家人工编写或经过多次迭代优化）的样本。</p>
+
+        <div class="math-equation" role="group" aria-label="ORPO 目标函数">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="ORPO 目标函数，可横向滚动">
+                <math display="block" aria-label="L ORPO 等于对偏好三元组取期望，期望内是 L SFT 减去 λ 乘以 log σ( log( oddsθ(y_w|x) 除以 oddsθ(y_l|x) ) )">
+                    <msub><mi>L</mi><mtext>ORPO</mtext></msub><mo>=</mo>
+                    <msub><mi>E</mi><mrow><mo>(</mo><mi>x</mi><mo>,</mo><msub><mi>y</mi><mi>w</mi></msub><mo>,</mo><msub><mi>y</mi><mi>l</mi></msub><mo>)</mo><mo>∼</mo><mi>D</mi></mrow></msub>
+                    <mrow><mo>[</mo><msub><mi>L</mi><mtext>SFT</mtext></msub><mo>−</mo><mi>λ</mi><mi>log</mi><mo>σ</mo><mrow><mo>(</mo><mi>log</mi>
+                        <mfrac>
+                            <mrow><msub><mi>odds</mi><mi>θ</mi></msub><mo>(</mo><msub><mi>y</mi><mi>w</mi></msub><mo>∣</mo><mi>x</mi><mo>)</mo></mrow>
+                            <mrow><msub><mi>odds</mi><mi>θ</mi></msub><mo>(</mo><msub><mi>y</mi><mi>l</mi></msub><mo>∣</mo><mi>x</mi><mo>)</mo></mrow>
+                        </mfrac>
+                    <mo>)</mo></mrow><mo>]</mo></mrow>
+                </math>
+            </div>
+            <p class="math-caption">公式来源：Hong 等，<em>ORPO: Monolithic Preference Optimization without Reference Model</em>（arXiv:2403.07691，式 (6)(7)）。其中优势比 odds<sub>θ</sub>(y|x) = P<sub>θ</sub>(y|x) / (1 − P<sub>θ</sub>(y|x))，L<sub>SFT</sub> 为对 chosen 的标准下一词损失，λ 控制偏好对比项权重。</p>
+        </div>
 
         <h2>算法选择决策表</h2>
 
