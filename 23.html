@@ -13,6 +13,17 @@
         figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
         figure svg { width: 100%; height: auto; display: block; }
         figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .math-equation { margin: 1rem 0; background: #faf8ff; border: 1px solid #e2d9f7; border-radius: 14px; padding: 0.8rem 1rem; }
+        .math-scroll { overflow-x: auto; }
+        .math-scroll math { font-size: 1.05rem; }
+        .math-caption { font-size: 0.82rem; color: #53676d; margin-top: 0.5rem; line-height: 1.6; }
+        a:focus-visible, button:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        .demo-card { margin: 1rem 0; background: #fbfdff; border: 1px solid #cfe3f0; border-radius: 14px; padding: 1rem; }
+        .demo-card h3 { margin-top: 0; }
+        .pipe-steps { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .pipe-steps button { border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3; border-radius: 10px; padding: 0.35rem 0.6rem; cursor: pointer; font-size: 0.85rem; }
+        .pipe-steps button[aria-pressed="true"] { background: #4338ca; color: #fff; }
+        .pipe-detail { margin-top: 0.7rem; font-size: 0.9rem; line-height: 1.7; }
         .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
         .skip-link:focus { left: 0; }
         a:focus-visible, button:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
@@ -131,6 +142,13 @@
             <figcaption>六步管线按固定顺序串联（图中采用蛇形排布以便在窄屏上仍可读）：先去重、再质量过滤与 PII 脱敏、然后去污、最后采样重平衡与格式转换。顺序不可随意打乱——先看清数据分布、再决定采样权重，是各步骤之间的隐含依赖。</figcaption>
         </figure>
 
+        <section class="demo-card" aria-labelledby="demo23-title">
+            <h3 id="demo23-title">交互：六步管线速查</h3>
+            <p>点击任一阶段，查看该步的目标、关键操作与常见失败模式；下方六节为逐步详解。</p>
+            <div class="pipe-steps" id="pipe-steps" role="group" aria-label="管线阶段选择"></div>
+            <div class="pipe-detail" id="pipe-detail" role="status" aria-live="polite"></div>
+        </section>
+
         <h3>① 去重——告别数据冗余</h3>
 
         <p>去重是管线的第一道防线。后训练数据中令人惊讶地存在大量重复：同一个代码片段可能出现在多个数据集中，同一个ChatGPT对话模板可能被重复采集数十万次。重复数据不仅浪费训练算力，还会导致模型对特定模式过拟合，损害泛化能力。</p>
@@ -206,6 +224,20 @@
         <p>去污（Contamination Removal）是指从训练数据中移除与评估基准测试集高度相似的内容。如果模型在训练阶段"见过"MMLU的测试题，那么在MMLU上的得分就失去了评估意义。</p>
 
         <p>标准做法是对训练数据和基准测试集分别计算n-gram特征（通常n=13），如果训练集中某条数据与基准集中某题的n-gram重叠超过阈值（通常设为80-90%），则该条数据被标记为污染样本，从训练集中移除。</p>
+
+        <div class="math-equation" role="group" aria-label="n-gram 污染比例">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="n-gram 污染比例，可横向滚动">
+                <math display="block" aria-label="污染比例 f(t) 等于测试样本 t 的 13-gram 集合与训练语料 13-gram 集合的交集大小，除以测试样本的 13-gram 集合大小">
+                    <mi>f</mi><mo>(</mo><mi>t</mi><mo>)</mo><mo>=</mo>
+                    <mfrac>
+                        <mrow><mo>|</mo><msub><mi>G</mi><mn>13</mn></msub><mo>(</mo><mi>t</mi><mo>)</mo><mo>∩</mo><msub><mi>G</mi><mn>13</mn></msub><mo>(</mo><mi>T</mi><mo>)</mo><mo>|</mo></mrow>
+                        <mrow><mo>|</mo><msub><mi>G</mi><mn>13</mn></msub><mo>(</mo><mi>t</mi><mo>)</mo><mo>|</mo></mrow>
+                    </mfrac>
+                    <mo>,</mo><mspace width="0.6em"/><mi>f</mi><mo>(</mo><mi>t</mi><mo>)</mo><mo>&gt;</mo><mi>θ</mi>
+                </math>
+            </div>
+            <p class="math-caption">公式为 n-gram 重叠去污的常用定义：t 为基准测试样本，T 为训练语料，G<sub>13</sub>(·) 为 13-gram 集合，θ 为判定阈值（常取 0.8–0.9）。n=13 的 n-gram 重叠惯例见 Brown 等，<em>Language Models are Few-Shot Learners</em>（arXiv:2005.14165）；代码基准上的污染分析见 Chen 等，<em>Evaluating Large Language Models Trained on Code</em>（arXiv:2107.03374）。</p>
+        </div>
 
         <div class="highlight">
             <strong>去污的灰色地带：</strong>并不是所有与基准测试集相似的数据都需要移除。有些数据与基准题"相似但不同"——例如都是"实现一个二分查找"的编程题，但具体要求和代码实现不同。这类数据需要人工判例，不能简单地一刀切。2025年，Anthropic和OpenAI都公开了自己的去污方法论文，其中提出的"渐进式去污"策略（从宽松到严格的多轮扫描）已成为业界参考标准。
@@ -481,5 +513,34 @@ if __name__ == "__main__":
     </main>
 </div>
 </div>
+    <script>
+    (function () {
+        var STEPS = [
+            { n: '① 去重', goal: '删除完全重复与近似重复样本', op: '精确哈希 + MinHash/LSH（可选语义 embedding）', fail: '阈值过松→残留重复；过紧→误删有效多样性' },
+            { n: '② 质量过滤', goal: '剔除低质与无信息样本', op: '启发式规则（长度、符号比、重复率）+ 分类器打分', fail: '规则偏差导致某些语言或风格系统性被删' },
+            { n: '③ PII 脱敏', goal: '移除个人身份信息', op: '正则 + NER 模型识别邮箱、电话、证件号、地址', fail: '漏检长尾 PII；过度替换破坏语义' },
+            { n: '④ 去污', goal: '移除与评测集重叠的数据', op: '13-gram 重叠检测，超阈值剔除', fail: '“相似但不同”的有效样本被误删' },
+            { n: '⑤ 采样与重平衡', goal: '校正任务与难度分布', op: '温度采样、难度分层、课程排序', fail: '小任务过度提权导致分布失真' },
+            { n: '⑥ 格式转换', goal: '输出训练框架所需格式', op: '字段映射、特殊 token 插入、序列化', fail: '字段不一致导致训练报错或信号错位' }
+        ];
+        var wrap = document.getElementById('pipe-steps');
+        var detail = document.getElementById('pipe-detail');
+        var active = 0;
+        function render() {
+            wrap.innerHTML = '';
+            STEPS.forEach(function (s, i) {
+                var b = document.createElement('button');
+                b.type = 'button'; b.setAttribute('aria-pressed', i === active ? 'true' : 'false');
+                b.textContent = s.n;
+                b.addEventListener('click', function () { active = i; render(); });
+                wrap.appendChild(b);
+            });
+            var s = STEPS[active];
+            detail.innerHTML = '<strong>' + s.n + '</strong><br><strong>目标：</strong>' + s.goal
+                + '<br><strong>关键操作：</strong>' + s.op + '<br><strong>常见失败：</strong>' + s.fail;
+        }
+        render();
+    })();
+    </script>
 </body>
 </html>
