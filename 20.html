@@ -17,6 +17,16 @@
         .math-scroll { overflow-x: auto; }
         .math-scroll math { font-size: 1.1rem; }
         a:focus-visible, button:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        .demo-card { margin: 1rem 0; background: #fbfdff; border: 1px solid #cfe3f0; border-radius: 14px; padding: 1rem; }
+        .demo-card h3 { margin-top: 0; }
+        .grpo-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .grpo-buttons button { border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3; border-radius: 10px; padding: 0.4rem 0.7rem; cursor: pointer; font-size: 0.9rem; }
+        .grpo-buttons button[aria-pressed="false"] { background: #fff; color: #94a3b8; }
+        .demo-rows { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+        .demo-rows li { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px dashed #dbe7ee; font-size: 0.9rem; }
+        .demo-rows .adv { font-variant-numeric: tabular-nums; font-weight: 700; }
+        .demo-rows .up .adv { color: #0f766e; }
+        .demo-rows .down .adv { color: #b91c1c; }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 <body>
@@ -153,6 +163,14 @@
                 </math>
             </div>
         </div>
+
+        <section class="demo-card" aria-labelledby="demo20-title">
+            <h3 id="demo20-title">交互：组内奖励如何变成优势</h3>
+            <p>点击下方每个回答切换对（1）/错（0），观察组内均值 μ、标准差 σ 与各自优势 A<sub>i</sub> 的变化（教学示意，G=4）。</p>
+            <div class="grpo-buttons" id="grpo-buttons"></div>
+            <p id="grpo-stats" role="status" aria-live="polite"></p>
+            <ul class="demo-rows" id="grpo-adv"></ul>
+        </section>
 
         <p>这个流程的精妙之处在于：它完全不依赖人类标注，也不依赖额外训练的 Reward Model——只用组内相对表现作为训练信号。归一化之后的优势值让模型学会了"在同一个问题的不同回答中，哪些是相对更好的"。DeepSeek-R1 正是通过这种方法，在数学推理、代码生成等领域达到了与 OpenAI o1 相当的水平。</p>
 
@@ -345,5 +363,40 @@
     </main>
 </div>
 </div>
+    <script>
+    (function () {
+        var rewards = [1, 0, 1, 0];
+        var bwrap = document.getElementById('grpo-buttons');
+        var stats = document.getElementById('grpo-stats');
+        var advlist = document.getElementById('grpo-adv');
+        function render() {
+            var G = rewards.length;
+            var mean = rewards.reduce(function (a, b) { return a + b; }, 0) / G;
+            var variance = rewards.reduce(function (a, r) { return a + (r - mean) * (r - mean); }, 0) / G;
+            var sd = Math.sqrt(variance);
+            bwrap.innerHTML = '';
+            rewards.forEach(function (r, i) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.setAttribute('aria-pressed', r === 1 ? 'true' : 'false');
+                b.setAttribute('aria-label', '第 ' + (i + 1) + ' 个回答，当前奖励 ' + r + '，点击切换');
+                b.textContent = 'o' + (i + 1) + ' : ' + r;
+                b.addEventListener('click', function () { rewards[i] = 1 - rewards[i]; render(); });
+                bwrap.appendChild(b);
+            });
+            stats.textContent = 'G=' + G + '，μ=' + mean.toFixed(2) + '，σ=' + sd.toFixed(2)
+                + (sd === 0 ? '（组内奖励相同，优势无定义——这正是 DAPO 动态采样要过滤的零梯度组）' : '');
+            advlist.innerHTML = '';
+            rewards.forEach(function (r, i) {
+                var a = sd === 0 ? 0 : (r - mean) / sd;
+                var li = document.createElement('li');
+                li.className = a > 0 ? 'up' : (a < 0 ? 'down' : '');
+                li.innerHTML = '<span>o' + (i + 1) + '（r=' + r + '）</span><span class="adv">A = ' + (sd === 0 ? '—' : a.toFixed(2)) + '</span>';
+                advlist.appendChild(li);
+            });
+        }
+        render();
+    })();
+    </script>
 </body>
 </html>
