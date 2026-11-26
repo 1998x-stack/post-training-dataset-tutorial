@@ -12,6 +12,17 @@
         figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
         figure svg { width: 100%; height: auto; display: block; }
         figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .math-equation { margin: 1rem 0; background: #faf8ff; border: 1px solid #e2d9f7; border-radius: 14px; padding: 0.8rem 1rem; }
+        .math-scroll { overflow-x: auto; }
+        .math-scroll math { font-size: 1.05rem; }
+        .math-caption { font-size: 0.82rem; color: #53676d; margin-top: 0.5rem; line-height: 1.6; }
+        a:focus-visible, button:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        .demo-card { margin: 1rem 0; background: #fbfdff; border: 1px solid #cfe3f0; border-radius: 14px; padding: 1rem; }
+        .demo-card h3 { margin-top: 0; }
+        .demo-slider { width: 100%; }
+        .demo-weights { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .demo-weights div { flex: 1 1 10rem; background: #eef6ff; border-radius: 10px; padding: 0.5rem 0.7rem; font-size: 0.88rem; }
+        .demo-weights b { font-variant-numeric: tabular-nums; }
         .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
         .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
         .skip-link:focus { left: 0; }
@@ -196,6 +207,19 @@ for ratio in candidates:
         <h3>温度采样</h3>
         <p>当数据集中各任务的数据量差异很大时（比如你有 100 万条通用数据但只有 1 万条安全数据），直接按比例采样会导致安全数据几乎没机会被模型看到。温度采样通过给数据量小的任务更高的采样权重来解决这个问题。</p>
 
+        <div class="math-equation" role="group" aria-label="温度采样权重公式">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="温度采样权重公式，可横向滚动">
+                <math display="block" aria-label="任务 i 的采样权重 w_i 等于 n_i 除以 N 的 T 分之一次方，再除以所有任务该值的总和">
+                    <msub><mi>w</mi><mi>i</mi></msub><mo>=</mo>
+                    <mfrac>
+                        <msup><mrow><mo>(</mo><mfrac><msub><mi>n</mi><mi>i</mi></msub><mi>N</mi></mfrac><mo>)</mo></mrow><mrow><mn>1</mn><mo>/</mo><mi>T</mi></mrow></msup>
+                        <mrow><munder><mo>∑</mo><mi>j</mi></munder><msup><mrow><mo>(</mo><mfrac><msub><mi>n</mi><mi>j</mi></msub><mi>N</mi></mfrac><mo>)</mo></mrow><mrow><mn>1</mn><mo>/</mo><mi>T</mi></mrow></msup></mrow>
+                    </mfrac>
+                </math>
+            </div>
+            <p class="math-caption">公式为温度采样（temperature sampling）的标准形式，多语言场景的讨论见 Conneau 与 Lample，<em>Cross-lingual Language Model Pretraining</em>（arXiv:1901.07291）及相关多语言训练实践。n<sub>i</sub> 为任务 i 的样本量，N 为总样本量，T 为温度：T=1 退化为按原比例采样；T&gt;1 时对小样本任务相对提权。</p>
+        </div>
+
         <pre><code>def temperature_sampling(datasets, temperature=1.0):
     """
     温度采样：temperature > 1.0 时，小数据量的任务获得更高的采样权重
@@ -219,6 +243,16 @@ sample_weights = temperature_sampling(
 )
 # 输出: {"general": ~0.91, "safety": ~0.09}
 # 默认比例是 0.99 vs 0.01，小任务权重提升了 9 倍</code></pre>
+
+        <section class="demo-card" aria-labelledby="demo13-title">
+            <h3 id="demo13-title">交互：温度如何改变小任务权重</h3>
+            <p>滑动温度 T，观察两个任务的采样权重如何变化（数值按上方公式现场计算）。</p>
+            <label for="temp-range">温度 T：<output id="temp-value" for="temp-range">1.0</output></label>
+            <input class="demo-slider" type="range" id="temp-range" min="1" max="4" step="0.1" value="1" aria-describedby="temp-summary">
+            <p id="temp-summary" role="status" aria-live="polite">按原始比例采样：general 0.990，safety 0.010</p>
+            <div class="demo-weights" id="temp-weights"></div>
+            <button type="button" id="temp-swap" aria-pressed="false">切换示例：100 万 / 1 万 → 10 万 / 1 千</button>
+        </section>
 
         <h3>按任务损失加权</h3>
         <p>一个更高级的方法是动态监测每个任务类型的 loss，给 loss 更高的任务更大的梯度权重。这背后的直觉是：如果模型在某个任务上还在"犯错"（loss 高），就多学一点。这种方法在训练框架层面的实现比较复杂，需要逐任务计算 loss。</p>
@@ -273,5 +307,40 @@ sample_weights = temperature_sampling(
     </div>
 </div>
 </div>
+    <script>
+    (function () {
+        var presets = [{ general: 1000000, safety: 10000 }, { general: 100000, safety: 1000 }];
+        var idx = 0;
+        var range = document.getElementById('temp-range');
+        var out = document.getElementById('temp-value');
+        var summary = document.getElementById('temp-summary');
+        var box = document.getElementById('temp-weights');
+        var swap = document.getElementById('temp-swap');
+        function compute() {
+            var T = parseFloat(range.value), sizes = presets[idx], N = sizes.general + sizes.safety;
+            var raw = {}, sum = 0;
+            Object.keys(sizes).forEach(function (k) { var v = Math.pow(sizes[k] / N, 1 / T); raw[k] = v; sum += v; });
+            var w = {}; Object.keys(raw).forEach(function (k) { w[k] = raw[k] / sum; });
+            return { w: w, sizes: sizes, N: N };
+        }
+        function render() {
+            var T = parseFloat(range.value); out.textContent = T.toFixed(1);
+            var r = compute(), w = r.w;
+            box.innerHTML = Object.keys(r.sizes).map(function (k) {
+                return '<div>' + k + '（n=' + r.sizes[k].toLocaleString() + '）<br>权重 <b>' + w[k].toFixed(3) + '</b></div>';
+            }).join('');
+            var base = r.sizes.safety / r.N;
+            summary.textContent = 'T=' + T.toFixed(1) + '：general ' + w.general.toFixed(3) + '，safety ' + w.safety.toFixed(3) + '（safety 相对初始权重的 ' + (w.safety / base).toFixed(1) + ' 倍）';
+        }
+        range.addEventListener('input', render);
+        swap.addEventListener('click', function () {
+            idx = 1 - idx; var pressed = idx === 1;
+            swap.setAttribute('aria-pressed', String(pressed));
+            swap.textContent = pressed ? '切换示例：10 万 / 1 千 → 100 万 / 1 万' : '切换示例：100 万 / 1 万 → 10 万 / 1 千';
+            render();
+        });
+        render();
+    })();
+    </script>
 </body>
 </html>
