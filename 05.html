@@ -11,6 +11,18 @@
         figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
         figure svg { width: 100%; height: auto; display: block; }
         figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .math-equation { margin: 1rem 0; background: #faf8ff; border: 1px solid #e2d9f7; border-radius: 14px; padding: 0.8rem 1rem; }
+        .math-scroll { overflow-x: auto; }
+        .math-scroll math { font-size: 1.05rem; }
+        .math-caption { font-size: 0.82rem; color: #53676d; margin-top: 0.5rem; line-height: 1.6; }
+        a:focus-visible, button:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        .demo-card { margin: 1rem 0; background: #fbfdff; border: 1px solid #cfe3f0; border-radius: 14px; padding: 1rem; }
+        .demo-card h2 { margin-top: 0; font-size: 1.15rem; }
+        .weight-buttons { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .weight-buttons button { border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3; border-radius: 10px; padding: 0.35rem 0.6rem; cursor: pointer; font-size: 0.85rem; }
+        .weight-buttons button[aria-pressed="true"] { background: #4338ca; color: #fff; }
+        .demo-rows { list-style: none; padding: 0; margin: 0.6rem 0 0; }
+        .demo-rows li { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px dashed #dbe7ee; font-size: 0.9rem; }
         .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
         .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
         .skip-link:focus { left: 0; }
@@ -265,6 +277,25 @@
                 return 1
         return 5</code></pre>
 
+        <div class="math-equation" role="group" aria-label="加权质量评分公式">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="加权质量评分公式，可横向滚动">
+                <math display="block" aria-label="样本 x 的综合质量分 S(x) 等于各维度权重 w_d 与得分 s_d(x) 的乘积之和，且权重之和为 1">
+                    <mi>S</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo>
+                    <munder><mo>∑</mo><mi>d</mi></munder><msub><mi>w</mi><mi>d</mi></msub><msub><mi>s</mi><mi>d</mi></msub><mo>(</mo><mi>x</mi><mo>)</mo><mo>,</mo><mspace width="0.6em"/>
+                    <munder><mo>∑</mo><mi>d</mi></munder><msub><mi>w</mi><mi>d</mi></msub><mo>=</mo><mn>1</mn>
+                </math>
+            </div>
+            <p class="math-caption">评分卡采用“归一化权重 + 维度得分”的加权求和形式：s<sub>d</sub> 为第 d 个维度的得分，w<sub>d</sub> 为其权重且各维度权重之和为 1。权重取值属项目经验，下方演示为教学示意。</p>
+        </div>
+
+        <section class="demo-card" aria-labelledby="demo5-title">
+            <h3 id="demo5-title">交互：权重如何改变评分结论</h3>
+            <p>同一条样本（各维度得分固定，为教学示意），切换权重方案，看综合分与是否达标如何变化。达标阈值 τ=3.5。</p>
+            <div class="weight-buttons" id="weight-buttons" role="group" aria-label="权重方案选择"></div>
+            <p id="score-summary" role="status" aria-live="polite"></p>
+            <ul class="demo-rows" id="weight-rows"></ul>
+        </section>
+
         <div class="highlight">
             <strong>实践要点：</strong>评分卡的权重设计不是一劳永逸的。建议每个项目开始时先用小批量数据测试，根据测试结果调整权重。例如，如果你发现安全违规的数据特别多，可以适当提高 safety 维度的权重，让安全不合格的数据更易被淘汰。随着数据质量的提升，权重也应该动态调整。
         </div>
@@ -290,5 +321,41 @@
     </div>
 </div>
 </div>
+    <script>
+    (function () {
+        var sample = { accuracy: 4, fluency: 5, consistency: 4, diversity: 3, safety: 5 };
+        var labels = { accuracy: '准确性', fluency: '流畅度', consistency: '一致性', diversity: '多样性', safety: '安全合规' };
+        var presets = [
+            { name: '均衡权重', w: { accuracy: 0.2, fluency: 0.2, consistency: 0.2, diversity: 0.2, safety: 0.2 } },
+            { name: '准确优先', w: { accuracy: 0.4, fluency: 0.15, consistency: 0.2, diversity: 0.1, safety: 0.15 } },
+            { name: '安全优先', w: { accuracy: 0.25, fluency: 0.15, consistency: 0.1, diversity: 0.1, safety: 0.4 } }
+        ];
+        var THRESHOLD = 3.5;
+        var wrap = document.getElementById('weight-buttons');
+        var summary = document.getElementById('score-summary');
+        var rows = document.getElementById('weight-rows');
+        var active = 0;
+        function render() {
+            wrap.innerHTML = '';
+            presets.forEach(function (p, i) {
+                var b = document.createElement('button');
+                b.type = 'button'; b.setAttribute('aria-pressed', i === active ? 'true' : 'false');
+                b.textContent = p.name;
+                b.addEventListener('click', function () { active = i; render(); });
+                wrap.appendChild(b);
+            });
+            var p = presets[active], total = 0;
+            rows.innerHTML = '';
+            Object.keys(sample).forEach(function (k) {
+                total += sample[k] * p.w[k];
+                var li = document.createElement('li');
+                li.innerHTML = '<span>' + labels[k] + '：得分 ' + sample[k] + ' × 权重 ' + p.w[k].toFixed(2) + '</span><span>' + (sample[k] * p.w[k]).toFixed(2) + '</span>';
+                rows.appendChild(li);
+            });
+            summary.textContent = p.name + '：综合分 ' + total.toFixed(2) + '，阈值 ' + THRESHOLD.toFixed(1) + ' → ' + (total >= THRESHOLD ? '达标' : '淘汰') + '（教学示意）';
+        }
+        render();
+    })();
+    </script>
 </body>
 </html>
