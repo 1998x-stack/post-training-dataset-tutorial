@@ -12,6 +12,19 @@
         figure { margin: 1.2rem 0; background: #fdfcff; border: 1px solid #e2d9f7; border-radius: 20px; padding: 1rem 1.1rem; }
         figure svg { width: 100%; height: auto; display: block; }
         figcaption { font-size: 0.86rem; color: #53676d; margin-top: 0.6rem; line-height: 1.65; }
+        .math-equation { margin: 1rem 0; background: #faf8ff; border: 1px solid #e2d9f7; border-radius: 14px; padding: 0.8rem 1rem; }
+        .math-scroll { overflow-x: auto; }
+        .math-scroll math { font-size: 1.05rem; }
+        .math-caption { font-size: 0.82rem; color: #53676d; margin-top: 0.5rem; line-height: 1.6; }
+        a:focus-visible, button:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+        .demo-card { margin: 1rem 0; background: #fbfdff; border: 1px solid #cfe3f0; border-radius: 14px; padding: 1rem; }
+        .demo-card h3 { margin-top: 0; }
+        .demo-row { display: flex; justify-content: space-between; gap: 0.6rem; padding: 0.35rem 0; border-bottom: 1px dashed #dbe7ee; font-size: 0.9rem; }
+        .demo-row .sim { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+        .demo-row.dup .sim { color: #b91c1c; }
+        .demo-row.keep .sim { color: #0f766e; }
+        .demo-slider { width: 100%; }
+        .demo-detail { margin-top: 0.6rem; font-size: 0.85rem; color: #475569; line-height: 1.65; }
         .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
         .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: #6d28d9; color: #fff; padding: 0.6rem 1rem; border-radius: 0 0 12px 0; text-decoration: none; }
         .skip-link:focus { left: 0; }
@@ -139,6 +152,19 @@ print(f"去重前: {len(dataset)} 条, 去重后: {len(deduped)} 条")
 
         <p>MinHash + LSH（Locality-Sensitive Hashing）是模糊去重的工业标准方法。它的核心思想是：将文本转换成固定长度的"签名"（signature），然后通过比较签名来判断文本相似度。如果两个文本的 MinHash 签名高度重合，它们就很可能包含相似的语义内容。</p>
 
+        <div class="math-equation" role="group" aria-label="Jaccard 相似度与 MinHash 性质">
+            <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="Jaccard 相似度与 MinHash 性质，可横向滚动">
+                <math display="block" aria-label="Jaccard 相似度 J(A,B) 等于 A 交 B 的模除以 A 并 B 的模">
+                    <mi>J</mi><mo>(</mo><mi>A</mi><mo>,</mo><mi>B</mi><mo>)</mo><mo>=</mo>
+                    <mfrac><mrow><mo>|</mo><mi>A</mi><mo>∩</mo><mi>B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi>A</mi><mo>∪</mo><mi>B</mi><mo>|</mo></mrow></mfrac>
+                </math>
+                <math display="block" aria-label="MinHash 性质：随机置换 h 下，两集合最小哈希值相等的概率等于它们的 Jaccard 相似度">
+                    <mi>Pr</mi><mo>[</mo><munder><mi>min</mi><mrow><mi>x</mi><mo>∈</mo><mi>A</mi></mrow></munder><mi>h</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo><munder><mi>min</mi><mrow><mi>x</mi><mo>∈</mo><mi>B</mi></mrow></munder><mi>h</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>]</mo><mo>=</mo><mi>J</mi><mo>(</mo><mi>A</mi><mo>,</mo><mi>B</mi><mo>)</mo>
+                </math>
+            </div>
+            <p class="math-caption">公式来源：Broder，<em>On the Resemblance and Containment of Documents</em>（1997）；Jaccard 与 MinHash 定义亦见 <a href="https://ekzhu.com/datasketch/">datasketch</a> 文档。A、B 为两段文本的 n-gram（或词）集合，h 为随机哈希/置换；用 num_perm 个独立哈希取最小值即得签名，签名重合比例是 Jaccard 的无偏估计。</p>
+        </div>
+
         <pre><code>from datasketch import MinHash, MinHashLSH
 
 def minhash_dedup(dataset, threshold=0.8, text_key="instruction"):
@@ -162,6 +188,17 @@ def minhash_dedup(dataset, threshold=0.8, text_key="instruction"):
             deduped.append(item)
 
     return deduped</code></pre>
+
+        <section class="demo-card" aria-labelledby="demo14-title">
+            <h3 id="demo14-title">交互：阈值如何决定“算不算重复”</h3>
+            <p>用一组教学示例句对演示 Jaccard 阈值的作用：滑动阈值，观察哪些句对被判为重复。相似度按“字符 2-gram 集合的 Jaccard 相似度”现场计算，可点击展开逐步核对。</p>
+            <label for="jac-threshold">Jaccard 阈值：<output id="jac-value" for="jac-threshold">0.80</output></label>
+            <input class="demo-slider" type="range" id="jac-threshold" min="0.30" max="0.95" step="0.01" value="0.80" aria-describedby="jac-summary">
+            <p id="jac-summary" role="status" aria-live="polite">阈值 0.80：0 / 4 对判为重复</p>
+            <ul id="jac-list" style="list-style:none;padding:0;margin:0.4rem 0;"></ul>
+            <button type="button" id="jac-detail-btn" aria-expanded="false" aria-controls="jac-detail-box">显示相似度计算过程</button>
+            <div class="demo-detail" id="jac-detail-box" hidden></div>
+        </section>
 
         <h3>语义 Embedding 去重</h3>
         <p>MinHash 基于词级别的重叠来计算相似度，无法捕捉"用词不同但意思相同"的语义重复。比如"二元查找算法的 Python 实现"和"如何使用 Python 实现二分搜索"——用词完全不同，但说的是同一件事。这时候就需要语义去重。</p>
@@ -446,5 +483,57 @@ nemo_curator dedup \
     </div>
 </div>
 </div>
+    <script>
+    (function () {
+        var PAIRS = [
+            { a: '请用 Python 写一个二分查找函数', b: '用 Python 写一个二分查找函数，谢谢' },
+            { a: '解释一下什么是过拟合', b: '解释一下什么是欠拟合' },
+            { a: '如何评价一支球队的实力', b: '如何评价一名球员的实力' },
+            { a: '给我一个健康早餐的食谱', b: '推荐几个简单的健康早餐做法' }
+        ];
+        var slider = document.getElementById('jac-threshold');
+        var out = document.getElementById('jac-value');
+        var summary = document.getElementById('jac-summary');
+        var list = document.getElementById('jac-list');
+        var btn = document.getElementById('jac-detail-btn');
+        var box = document.getElementById('jac-detail-box');
+        function shingles(s) {
+            var t = s.replace(/\s+/g, ''); var set = new Set();
+            for (var i = 0; i < t.length - 1; i++) set.add(t.slice(i, i + 2));
+            return set;
+        }
+        function counts(a, b) {
+            var A = shingles(a), B = shingles(b), inter = 0;
+            A.forEach(function (x) { if (B.has(x)) inter++; });
+            return { inter: inter, union: A.size + B.size - inter };
+        }
+        function render() {
+            var thr = parseFloat(slider.value); out.textContent = thr.toFixed(2);
+            var dup = 0; list.innerHTML = '';
+            PAIRS.forEach(function (p) {
+                var c = counts(p.a, p.b), j = c.union ? c.inter / c.union : 0, isDup = j >= thr;
+                if (isDup) dup++;
+                var li = document.createElement('li');
+                li.className = 'demo-row ' + (isDup ? 'dup' : 'keep');
+                li.innerHTML = '<span>' + p.a + ' … ' + p.b + '</span><span class="sim">J=' + j.toFixed(2) + ' ' + (isDup ? '重复' : '保留') + '</span>';
+                list.appendChild(li);
+            });
+            summary.textContent = '阈值 ' + thr.toFixed(2) + '：' + dup + ' / ' + PAIRS.length + ' 对判为重复（按字符 2-gram 集合计算，仅教学示意）';
+            var html = '';
+            PAIRS.forEach(function (p) {
+                var c = counts(p.a, p.b), j = c.union ? (c.inter / c.union).toFixed(3) : '0';
+                html += '<div><code>|A∩B| = ' + c.inter + '，|A∪B| = ' + c.union + ' → J = ' + j + '</code>　“' + p.a + '” vs “' + p.b + '”</div>';
+            });
+            box.innerHTML = html;
+        }
+        slider.addEventListener('input', render);
+        btn.addEventListener('click', function () {
+            var open = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', String(!open)); box.hidden = open;
+            btn.textContent = open ? '显示相似度计算过程' : '隐藏相似度计算过程';
+        });
+        render();
+    })();
+    </script>
 </body>
 </html>
