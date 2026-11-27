@@ -17,6 +17,9 @@
         .skip-link:focus { left: 0; }
         table { width: 100%; }
         th, td { overflow-wrap: anywhere; }
+        .math-scroll { overflow-x: auto; padding: 0.4rem 0; }
+        .math-scroll math { font-size: 1.05rem; }
+        a:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
@@ -101,6 +104,39 @@
             </svg>
             <figcaption>多轮对话 SFT 的关键约定：User 轮是上下文、Assistant 轮才是学习目标。本节后面的“角色标记错误”案例，本质就是这条交替规律被局部破坏。</figcaption>
         </figure>
+
+        <h3>损失屏蔽：把监督信号限定在 Assistant 轮</h3>
+
+        <p>上图那条“哪些轮计入 loss”的规律，可以写成一条明确的损失函数。给定一条 <em>T</em> 个 token 的对话序列，为每个位置 <em>t</em> 定义一个掩码指示量：</p>
+
+        <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="多轮对话 SFT 损失函数，可横向滚动">
+            <math display="block" aria-label="L(θ) 等于负的一除以所有 m_t 之和，再乘以求和：对每个位置 t，m_t 乘以 log p_θ(x_t 给定 x 小于 t)。其中 m_t 在 Assistant token 位置为 1，在 User 与系统 token 位置为 0。">
+                <mi>L</mi><mo>(</mo><mi>θ</mi><mo>)</mo><mo>=</mo><mo>−</mo>
+                <mfrac><mn>1</mn><mrow><munder><mo>∑</mo><mi>t</mi></munder><msub><mi>m</mi><mi>t</mi></msub></mrow></mfrac>
+                <munder><mo>∑</mo><mi>t</mi></munder>
+                <msub><mi>m</mi><mi>t</mi></msub><mi>log</mi><msub><mi>p</mi><mi>θ</mi></msub>
+                <mo>(</mo><msub><mi>x</mi><mi>t</mi></msub><mo>∣</mo><msub><mi>x</mi><mrow><mo>&lt;</mo><mi>t</mi></mrow></msub><mo>)</mo>
+            </math>
+        </div>
+
+        <p>其中 <math display="inline" aria-label="m_t 取 1 表示 Assistant token，取 0 表示 User 或系统 token"><msub><mi>m</mi><mi>t</mi></msub><mo>∈</mo><mo>{</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo>}</mo></math>：当第 <em>t</em> 个 token 属于 Assistant 回复时取 1，属于 User 提问或系统提示时取 0。分母 <math display="inline" aria-label="所有 m_t 之和，即 Assistant token 总数"><munder><mo>∑</mo><mi>t</mi></munder><msub><mi>m</mi><mi>t</mi></msub></math> 是参与损失的 token 数，用它归一化可以避免对话越长 loss 数值越大的假象。</p>
+
+        <div class="tip">
+            <strong>为什么分母要对齐：</strong>如果把分母写成整条序列长度 <em>T</em>，那么一条 7 轮对话和一条 2 轮对话的 loss 就不在同一量纲上，梯度会被“长对话里大量的 User token”稀释。业界通行的做法是把非目标 token 的标签设为 <code>-100</code>（PyTorch <code>CrossEntropyLoss</code> 的 <code>ignore_index</code>），并只对有效 token 求平均，这正是 HuggingFace TRL 的 <code>DataCollatorForCompletionOnlyLM</code> 所做的事。
+        </div>
+
+        <pre><code># 构造多轮 SFT 的 loss mask —— 只有 assistant token 参与损失
+IGNORE = -100  # PyTorch CrossEntropyLoss 的 ignore_index
+
+def build_labels(roles, token_ids):
+    """roles[i] ∈ {"user", "assistant"}；token_ids[i] 是该 token 的 id。"""
+    return [tid if role == "assistant" else IGNORE
+            for role, tid in zip(roles, token_ids)]
+
+roles  = ["user", "user", "assistant", "user", "assistant", "assistant"]
+tokens = [10, 11, 12, 20, 21, 22]
+assert build_labels(roles, tokens) == [IGNORE, IGNORE, 12, IGNORE, 21, 22]
+print(build_labels(roles, tokens))  # [-100, -100, 12, -100, 21, 22]</code></pre>
 
         <h2>UltraChat（清华高质量生成式对话）</h2>
 
