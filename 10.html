@@ -17,6 +17,9 @@
         .skip-link:focus { left: 0; }
         table { width: 100%; }
         th, td { overflow-wrap: anywhere; }
+        .math-scroll { overflow-x: auto; padding: 0.4rem 0; }
+        .math-scroll math { font-size: 1.05rem; }
+        a:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
@@ -161,6 +164,33 @@
             <li><strong>Level 5 题目</strong>：挑战性样本，适合在 GRPO 阶段使用，而不是早期 SFT</li>
         </ul>
 
+        <h3>推理评测为什么常用 pass@k</h3>
+
+        <p>数学与代码推理任务通常允许模型<strong>采样多次</strong>，因此评测关心的是“k 次采样里至少有一次答对”的概率，而不是单次贪心解码的准确率。这个指标叫 <strong>pass@k</strong>，其无偏估计为：</p>
+
+        <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="pass@k 公式，可横向滚动">
+            <math display="block" aria-label="pass@k 等于 1 减去连乘：i 从 n 减 c 加 1 到 n，(1 减 k 除以 i)；它等于 1 减去 C(n 减 c, k) 除以 C(n, k)">
+                <mi>pass@</mi><mi>k</mi><mo>=</mo><mn>1</mn><mo>−</mo>
+                <munderover><mo>∏</mo><mrow><mi>i</mi><mo>=</mo><mi>n</mi><mo>−</mo><mi>c</mi><mo>+</mo><mn>1</mn></mrow><mi>n</mi></munderover>
+                <mrow><mo>(</mo><mn>1</mn><mo>−</mo><mfrac><mi>k</mi><mi>i</mi></mfrac><mo>)</mo></mrow>
+            </math>
+        </div>
+
+        <p>其中 <em>n</em> 是采样总数，<em>c</em> 是其中正确的数量。该式等价于 <math display="inline" aria-label="1 减去 C(n 减 c, k) 除以 C(n, k)"><mn>1</mn><mo>−</mo><mfrac><mrow><mi>C</mi><mo>(</mo><mi>n</mi><mo>−</mo><mi>c</mi><mo>,</mo><mi>k</mi><mo>)</mo></mrow><mrow><mi>C</mi><mo>(</mo><mi>n</mi><mo>,</mo><mi>k</mi><mo>)</mo></mrow></mfrac></math>，是 Chen 等（HumanEval/Codex）提出的稳定估计量。注意口径：GSM8K 常报告贪心 exact-match 准确率，MATH、HumanEval 则常报告 pass@k，两者<strong>不可直接比较</strong>。下面的用例验证边界与退化情形：</p>
+
+        <pre><code>from math import comb
+
+def pass_at_k(n, c, k):
+    """n 次采样中 c 次正确，估计 pass@k = 1 - C(n-c,k)/C(n,k)。"""
+    if n - c < k:          # 错误样本不足 k 个 -> 任意 k 次采样至少有一次正确
+        return 1.0
+    return 1.0 - comb(n - c, k) / comb(n, k)
+
+assert pass_at_k(200, 0, 10) == 0.0                 # 一次都没对
+assert pass_at_k(50, 50, 10) == 1.0                 # 全部正确
+assert abs(pass_at_k(200, 20, 1) - 0.1) < 1e-9      # k=1 时退化为单次准确率
+print(round(pass_at_k(200, 20, 10), 4))</code></pre>
+
         <h2>CoT标注的质量要求</h2>
 
         <p>无论是 OpenOrca、GSM8K 还是 MATH，它们的价值都依赖于一个共同的前提——<strong>CoT 标注的质量</strong>。一条好的 CoT 标注应该满足以下要求：</p>
@@ -243,6 +273,7 @@
             <li>Orca: Progressive Learning from Complex Explanation Traces（小模型学推理过程）— <a href="https://arxiv.org/abs/2306.02707">arXiv:2306.02707</a></li>
             <li>GSM8K: Training Verifiers to Solve Math Word Problems — <a href="https://arxiv.org/abs/2110.14168">arXiv:2110.14168</a></li>
             <li>MATH: Measuring Mathematical Problem Solving — <a href="https://arxiv.org/abs/2103.03874">arXiv:2103.03874</a></li>
+            <li>Evaluating Large Language Models Trained on Code（pass@k 无偏估计）— <a href="https://arxiv.org/abs/2107.03374">arXiv:2107.03374</a></li>
             <li>OpenOrca 数据集 — <a href="https://huggingface.co/datasets/Open-Orca/OpenOrca">Open-Orca/OpenOrca</a></li>
         </ul>
         <div class="tip">
