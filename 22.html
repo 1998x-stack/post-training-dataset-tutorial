@@ -17,6 +17,9 @@
         .skip-link:focus { left: 0; }
         table { width: 100%; }
         th, td { overflow-wrap: anywhere; }
+        .math-scroll { overflow-x: auto; padding: 0.4rem 0; }
+        .math-scroll math { font-size: 1.05rem; }
+        a:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
@@ -257,6 +260,34 @@ Agent 任务：阅读 Issue 描述，理解 bug 原因，修改代码使其通�
         </table>
 
         <p>在实际系统中，这些维度的权重需要精心调校。一个常见的问题是：如果任务完成度权重过高，模型会"不择手段"地完成任务——即使这意味着生成大量无意义的中介步骤或牺牲代码质量。反之，如果效率权重过高，模型会倾向于走捷径，可能错过更稳健的解决方案。</p>
+
+        <h3>稀疏奖励：折扣回报与步级信用分配</h3>
+
+        <p>Agent 数据的一个根本难点是<strong>奖励稀疏</strong>：一条 episode 往往只在终局（构建是否通过、测试是否全绿）给出 0/1 奖励，中间几十步动作没有任何信号。直接拿终局奖励做监督，模型无法区分“哪一步做对了”。通用的做法是按<strong>折扣回报</strong>把终局奖励回传到每一步（标准强化学习定义，非某篇论文独有）：</p>
+
+        <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="折扣回报公式，可横向滚动">
+            <math display="block" aria-label="从时刻 t 出发的折扣回报 G_t 等于求和：k 从 0 到 T 减 t，γ 的 k 次幂乘以 r 下标 t 加 k">
+                <msub><mi>G</mi><mi>t</mi></msub><mo>=</mo>
+                <munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>T</mi><mo>−</mo><mi>t</mi></mrow></munderover>
+                <msup><mi>γ</mi><mi>k</mi></msup><msub><mi>r</mi><mrow><mi>t</mi><mo>+</mo><mi>k</mi></mrow></msub>
+            </math>
+        </div>
+
+        <p>其中 <em>γ</em>（0&lt;<em>γ</em>≤1）是折扣因子：它让离任务完成越近的步骤分到越高的信用，越靠前的步骤逐渐衰减。把终局奖励替换成逐步的分层奖励时，同样的回传方式也适用。下面的固定用例验证回传顺序——只有最后一步拿到奖励时，前面各步的回报应依次为 γ 的幂次：</p>
+
+        <pre><code>def discounted_returns(rewards, gamma=0.9):
+    """从后往前累加，把终局奖励回传给每一步（标准的折扣回报计算）。"""
+    out = [0.0] * len(rewards)
+    running = 0.0
+    for t in reversed(range(len(rewards))):
+        running = rewards[t] + gamma * running
+        out[t] = running
+    return out
+
+# 只在最后一步有 +1 奖励：前面步骤的回报依次是 γ³, γ², γ, 1
+got = discounted_returns([0, 0, 0, 1.0], gamma=0.9)
+assert all(abs(a - b) < 1e-9 for a, b in zip(got, [0.729, 0.81, 0.9, 1.0]))
+print(got)  # [0.729, 0.81, 0.9, 1.0]</code></pre>
 
         <h2>Agent 数据与普通 SFT 数据的根本区别对比表</h2>
 
