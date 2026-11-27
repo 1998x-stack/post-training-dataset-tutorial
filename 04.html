@@ -16,6 +16,9 @@
         .skip-link:focus { left: 0; }
         table { width: 100%; }
         th, td { overflow-wrap: anywhere; }
+        .math-scroll { overflow-x: auto; padding: 0.4rem 0; }
+        .math-scroll math { font-size: 1.05rem; }
+        a:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
@@ -254,6 +257,35 @@ class AutoCurriculumGenerator:
         <div class="warning">
             <strong>教训：</strong>真实用户采集的数据天然包含"长尾毒药"——绝大多数对话是良性的，但少量有害样本足以污染整个模型。在使用真实用户数据前，必须建立多层过滤机制：关键词过滤 + 分类器过滤 + 人工抽检。没有经过严格清洗的真实数据，宁可不用的好。记住——<strong>数据不是越多越好，有毒的数据只会让你的模型更糟糕。</strong>
         </div>
+
+        <h3>清洗要几层：残余污染率的估算</h3>
+
+        <p>上面这个案例里，危害不来自“有害样本很多”，而来自长尾里的少量毒样本。所以关键问题是：过滤之后还剩多少？假设原始有害率为 <em>p</em><sub>0</sub>，第 <em>j</em> 层过滤能拦住其中 <em>r</em><sub>j</sub> 比例的有害样本，在“各层独立”的理想假设下，残余有害率约为：</p>
+
+        <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="残余有害率公式，可横向滚动">
+            <math display="block" aria-label="残余有害率 p_res 等于 p_0 乘以连乘：j 从 1 到 m，(1 减 r_j)">
+                <msub><mi>p</mi><mtext>res</mtext></msub><mo>=</mo>
+                <msub><mi>p</mi><mn>0</mn></msub>
+                <munderover><mo>∏</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>m</mi></munderover>
+                <mrow><mo>(</mo><mn>1</mn><mo>−</mo><msub><mi>r</mi><mi>j</mi></msub><mo>)</mo></mrow>
+            </math>
+        </div>
+
+        <p>这个式子解释了两件事：一是单层过滤很难做到零漏网，二是多层的收益是<strong>相乘</strong>的——“90% + 95% + 80%”三层并不是简单叠加，而是把残余压低到原来的 0.1×0.05×0.2。注意这是独立假设下的<strong>教学近似</strong>，真实场景中分类器与关键词过滤高度相关，实际残余会高于此估计。下面用一个固定用例验证：</p>
+
+        <pre><code>def residual_harmful_rate(p0, recalls):
+    """recalls: 各层对有害样本的召回率（0~1）；返回独立假设下的残余有害率。"""
+    p = p0
+    for r in recalls:
+        p *= (1 - r)
+    return p
+
+p0 = 0.02  # 原始数据中有害样本约占 2%（教学示意取值，非实测）
+one   = residual_harmful_rate(p0, [0.90])                 # 只做关键词过滤
+three = residual_harmful_rate(p0, [0.90, 0.95, 0.80])     # 关键词 + 分类器 + 人工抽检
+assert abs(one - 0.002) < 1e-12
+assert three < one                                        # 多层必然优于单层
+print(f"{one:.2e} -> {three:.2e}")   # 2.00e-03 -> 2.00e-05</code></pre>
 
         <p>这个教训也引出了我们的下一个话题——获得数据只是第一步，<strong>如何评估数据质量？如何确保你采集到的数据是真正有用的？让我们进入第 5 章：数据质量评估框架。</strong></p>
 
