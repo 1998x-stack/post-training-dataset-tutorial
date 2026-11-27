@@ -17,6 +17,9 @@
         .skip-link:focus { left: 0; }
         table { width: 100%; }
         th, td { overflow-wrap: anywhere; }
+        .math-scroll { overflow-x: auto; padding: 0.4rem 0; }
+        .math-scroll math { font-size: 1.05rem; }
+        a:focus-visible, .math-scroll:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
@@ -282,7 +285,54 @@
             </tr>
         </table>
 
-        <p>工具调用数据是连接"语言模型"和"Agent 系统"的关键桥梁。通过这一章，你了解了函数调用数据的核心结构（function definition → tool_call → tool_response 三要素循环），掌握了 Glaive v2 和 ToolBench 这两个标杆数据集的特点和适用场景，也学会了函数调用数据的质量要求以及一个经典的"参数幻觉"踩坑教训。</p>
+        <h2>工具调用怎么评：从字符串匹配到 AST 匹配</h2>
+
+        <p>工具调用任务的评测不能像普通问答那样看“文字像不像”。模型输出的其实是<strong>结构化调用</strong>——一个函数名加一组参数。常见的两档口径是：</p>
+
+        <ul>
+            <li><strong>精确匹配（Exact Match）</strong>：把模型输出的调用字符串与参考答案逐字符比较。实现简单，但过于苛刻——JSON 键顺序不同、空格不同、<code>1</code> 与 <code>1.0</code> 都会被判错。</li>
+            <li><strong>抽象语法树匹配（AST Match）</strong>：先把两边都解析成“函数名 + 参数字典”，再比较结构是否语义等价。它能容忍无关格式差异，是 API-Bank、ToolBench 等工作采用的评测方式。</li>
+        </ul>
+
+        <p>无论哪种匹配器，最终都可以写成一个<strong>通过率（pass rate）</strong>：</p>
+
+        <div class="math-scroll" data-math-scroll tabindex="0" role="region" aria-label="工具调用通过率公式，可横向滚动">
+            <math display="block" aria-label="通过率 Pass 等于一除以 N 乘以求和：从 i 等于 1 到 N，指示函数 1 当预测调用与参考答案工具调用 AST 等价，否则为 0">
+                <mi>Pass</mi><mo>=</mo><mfrac><mn>1</mn><mi>N</mi></mfrac>
+                <munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover>
+                <mn>1</mn><mo>[</mo><mi>Match</mi><mo>(</mo><msub><mover><mi>y</mi><mo>^</mo></mover><mi>i</mi></msub><mo>,</mo><msub><mi>y</mi><mi>i</mi></msub><mo>)</mo><mo>]</mo>
+            </math>
+        </div>
+
+        <p>其中 <em>N</em> 是评测样本数，<em>y</em><sub>i</sub> 是参考答案的调用，<em>ŷ</em><sub>i</sub> 是模型预测；<code>Match</code> 为真的条件是两个调用的函数名相同且参数字典语义等价。下面用一个固定用例验证 AST 匹配器：键顺序不同不应影响判定。</p>
+
+        <pre><code>import json
+
+def ast_match(pred: str, gold: str) -> bool:
+    """把两个调用解析为 (name, args) 后做语义比较，忽略键顺序与数字写法。"""
+    def norm(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return v
+    p, g = json.loads(pred), json.loads(gold)
+    if p["name"] != g["name"]:
+        return False
+    pa, ga = p.get("arguments", {}), g.get("arguments", {})
+    return {k: norm(v) for k, v in pa.items()} == {k: norm(v) for k, v in ga.items()}
+
+# 键顺序不同，但语义相同 -> 应判为匹配
+assert ast_match('{"name":"get_weather","arguments":{"city":"北京","unit":"C"}}',
+                '{"name":"get_weather","arguments":{"unit":"C","city":"北京"}}')
+# 1 与 1.0 写法不同但数值相等 -> 判为匹配
+assert ast_match('{"name":"sqrt","arguments":{"x":1}}',
+                '{"name":"sqrt","arguments":{"x":1.0}}')
+# 函数名不同 -> 判为不匹配
+assert not ast_match('{"name":"sqrt","arguments":{"x":4}}',
+                     '{"name":"pow","arguments":{"x":4}}')
+print("ok")</code></pre>
+
+        <p>工具调用数据是连接“语言模型”和“Agent 系统”的关键桥梁。通过这一章,你了解了函数调用数据的核心结构(function definition → tool_call → tool_response 三要素循环),掌握了 Glaive v2 和 ToolBench 这两个标杆数据集的特点和适用场景,也学会了函数调用数据的质量要求以及一个经典的"参数幻觉"踩坑教训。</p>
 
         <p>但工具调用只是 Agent 能力的起点。当模型学会调用单个工具后，下一步是让它学会在多个步骤中综合运用工具、处理中间结果、并根据反馈动态调整行动策略——这就是真正意义上的 Agent 能力。下一章，我们将深入探讨 <strong>Agent 多步推理数据——SWE-bench、环境交互轨迹、以及 Agent 数据与普通 SFT 数据的根本区别。</strong></p>
 
