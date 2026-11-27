@@ -200,6 +200,30 @@ dvc checkout                   # 同步数据到对应版本</code></pre>
             <strong>为什么版本管理如此重要？</strong>想象一下，你发现当前模型在某些问题上表现奇怪，怀疑是训练数据有问题。如果没有版本管理，你甚至无法确认训练时用的是哪个版本的数据。有了 DVC 和 Data Card，你可以精确回退到那个版本的数据集，检查具体哪个样本可能导致了问题。这在模型迭代调试中是极其宝贵的能力。
         </div>
 
+        <h3>可复现性基石：内容哈希（数据指纹）</h3>
+
+        <p>DVC 记录的是文件字节级哈希，但同一批样本只要行序或字段顺序变动，文件哈希就会变，于是“内容相同”被误判为“版本不同”。更稳的做法是先对每条样本做规范化（字段排序、去除无关空白），再对所有样本排序后整体哈希，得到一个与顺序无关的<strong>数据指纹</strong>。</p>
+
+        <pre><code>import hashlib, json
+
+def canonical(sample: dict) -> str:
+    return json.dumps(sample, sort_keys=True, ensure_ascii=False,
+                      separators=(",", ":"))
+
+def data_fingerprint(samples) -> str:
+    """与样本顺序、字段顺序、键值空白无关的内容哈希。"""
+    lines = sorted(canonical(s) for s in samples)
+    blob = "\n".join(lines).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()
+
+a = [{"q": "1+1", "a": "2"}, {"q": "2+2", "a": "4"}]
+b = [{"a": "4", "q": "2+2"}, {"a": "2", "q": "1+1"}]  # 顺序与字段序都不同
+assert data_fingerprint(a) == data_fingerprint(b)
+assert data_fingerprint(a) != data_fingerprint(a[:1])   # 少一条样本则指纹必变
+print(data_fingerprint(a)[:12])</code></pre>
+
+        <p>把这个指纹写进 Data Card 与训练实验记录，就能在合并数据或重跑清洗脚本后一眼判断“到底是不是同一份数据”，这正是版本控制可复现性的最后一道保险。</p>
+
         <h2>6.4 数据血缘追踪</h2>
 
         <p>数据血缘（Data Lineage）追踪的是每条训练样本的"来龙去脉"：这条数据来自哪个原始来源？经过了什么清洗规则？属于哪次标注批次？被配比到了哪个训练集版本？</p>
